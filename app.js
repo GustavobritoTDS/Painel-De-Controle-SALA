@@ -701,8 +701,14 @@ class VozController {
       .replace(/\s+/g, " ")
       .trim();
 
+    // Verifica se algum dos termos está presente como substring na frase.
     const tem = (...termos) =>
       termos.some((termo) => frase.includes(termo));
+
+    // Verifica se o termo aparece como palavra isolada (evita falsos positivos
+    // por substring, como "ar" dentro de "ligar" ou "desligar").
+    const temPalavra = (termo) =>
+      new RegExp(`(?<![a-z])${termo}(?![a-z])`).test(frase);
 
     const desligar = tem(
       "desligar",
@@ -772,7 +778,8 @@ class VozController {
       return "ligar_modo_auto";
     }
 
-    const ar = tem("ar", "condicionado", "climatizacao");
+    // "ar" usa temPalavra para não colidir com "ligar" / "desligar".
+    const ar = temPalavra("ar") || tem("condicionado", "climatizacao");
     const luz = tem("luz", "luzes", "iluminacao");
 
     // Desligar é analisado antes de ligar.
