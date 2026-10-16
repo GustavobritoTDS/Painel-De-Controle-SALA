@@ -84,7 +84,7 @@ try {
     </header>
 
     <!-- ASSISTENTE DE VOZ -->
-    <section id="voz-widget" class="voz-widget" aria-label="Assistente de voz">
+    <section id="voz-widget" class="voz-widget" aria-label="Assistente de voz" hidden>
       <div class="voz-identidade">
         <span class="voz-icone-principal" aria-hidden="true">
           <svg class="ico"><use href="#i-mic"/></svg>
@@ -112,6 +112,11 @@ try {
         <span id="btn-voz-texto">Iniciar voz</span>
       </button>
     </section>
+
+    <button id="btn-toggle-voz" class="btn-toggle-voz" type="button" aria-controls="voz-widget" aria-expanded="false" aria-label="Abrir assistente de voz" title="Assistente de voz">
+      <svg class="ico" aria-hidden="true"><use href="#i-mic"/></svg>
+      <span class="sr-only">Abrir assistente de voz</span>
+    </button>
 
     <!-- SENSORES -->
     <section class="metricas">
@@ -210,7 +215,7 @@ try {
             <span class="legenda-item"><span class="ponto-amostra"></span> Passe o cursor sobre o gráfico para detalhes</span>
           </div>
           <div class="linha-botoes">
-            <button class="btn" id="btn-baixar"><svg class="ico"><use href="#i-baixar"/></svg>Baixar histórico (CSV)</button>
+            <button class="btn" id="btn-baixar"><svg class="ico"><use href="#i-baixar"/></svg>Baixar histórico (Excel)</button>
             <button class="btn" id="btn-limpar"><svg class="ico"><use href="#i-lixo"/></svg>Limpar histórico</button>
           </div>
         </div>
