@@ -263,38 +263,174 @@ function limparHistorico() {
   desenhar();
 }
 
-function baixarCsv() {
-  const linhas = [
-    "hora,temperatura,umidade,luminosidade,pessoas"
+function baixarHistoricoExcel() {
+  const codificador = new TextEncoder();
+  const escaparXml = (valor) => String(valor ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+  const escrever16 = (bytes, posicao, valor) => {
+    bytes[posicao] = valor & 255;
+    bytes[posicao + 1] = (valor >>> 8) & 255;
+  };
+  const escrever32 = (bytes, posicao, valor) => {
+    bytes[posicao] = valor & 255;
+    bytes[posicao + 1] = (valor >>> 8) & 255;
+    bytes[posicao + 2] = (valor >>> 16) & 255;
+    bytes[posicao + 3] = (valor >>> 24) & 255;
+  };
+  const tabelaCrc = Array.from({ length: 256 }, (_, indice) => {
+    let valor = indice;
+    for (let bit = 0; bit < 8; bit++) {
+      valor = (valor & 1) ? (0xedb88320 ^ (valor >>> 1)) : (valor >>> 1);
+    }
+    return valor >>> 0;
+  });
+  const calcularCrc = (dados) => {
+    let crc = 0xffffffff;
+    for (const byte of dados) {
+      crc = tabelaCrc[(crc ^ byte) & 255] ^ (crc >>> 8);
+    }
+    return (crc ^ 0xffffffff) >>> 0;
+  };
+  const criarArquivoZip = (arquivos) => {
+    const partes = [];
+    const diretorio = [];
+    let deslocamento = 0;
+
+    for (const [nome, conteudo] of arquivos) {
+      const nomeBytes = codificador.encode(nome);
+      const dados = codificador.encode(conteudo);
+      const crc = calcularCrc(dados);
+      const cabecalho = new Uint8Array(30);
+
+      escrever32(cabecalho, 0, 0x04034b50);
+      escrever16(cabecalho, 4, 20);
+      escrever16(cabecalho, 26, nomeBytes.length);
+      escrever32(cabecalho, 14, crc);
+      escrever32(cabecalho, 18, dados.length);
+      escrever32(cabecalho, 22, dados.length);
+
+      partes.push(cabecalho, nomeBytes, dados);
+      diretorio.push({ nomeBytes, crc, tamanho: dados.length, deslocamento });
+      deslocamento += cabecalho.length + nomeBytes.length + dados.length;
+    }
+
+    const diretorioPartes = diretorio.map((arquivo) => {
+      const cabecalho = new Uint8Array(46);
+      escrever32(cabecalho, 0, 0x02014b50);
+      escrever16(cabecalho, 4, 20);
+      escrever16(cabecalho, 6, 20);
+      escrever16(cabecalho, 28, arquivo.nomeBytes.length);
+      escrever32(cabecalho, 16, arquivo.crc);
+      escrever32(cabecalho, 20, arquivo.tamanho);
+      escrever32(cabecalho, 24, arquivo.tamanho);
+      escrever32(cabecalho, 42, arquivo.deslocamento);
+      return [cabecalho, arquivo.nomeBytes];
+    });
+    const tamanhoDiretorio = diretorioPartes.reduce(
+      (total, partesDoArquivo) => total + partesDoArquivo[0].length + partesDoArquivo[1].length,
+      0
+    );
+    const fim = new Uint8Array(22);
+    escrever32(fim, 0, 0x06054b50);
+    escrever16(fim, 8, diretorio.length);
+    escrever16(fim, 10, diretorio.length);
+    escrever32(fim, 12, tamanhoDiretorio);
+    escrever32(fim, 16, deslocamento);
+
+    return new Blob(
+      [...partes, ...diretorioPartes.flat(), fim],
+      { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }
+    );
+  };
+  const celulaTexto = (coluna, linha, valor, estilo = 0) =>
+    `<c r="${coluna}${linha}" t="inlineStr"${estilo ? ` s="${estilo}"` : ""}><is><t>${escaparXml(valor)}</t></is></c>`;
+  const celulaNumero = (coluna, linha, valor) =>
+    `<c r="${coluna}${linha}"><v>${Number(valor)}</v></c>`;
+  const cabecalhos = [
+    "Data",
+    "Hora",
+    "Temperatura (°C)",
+    "Umidade (%)",
+    "Luminosidade (%)",
+    "Pessoas"
+  ];
+  const colunas = ["A", "B", "C", "D", "E", "F"];
+  const linhasPlanilha = [
+    `<row r="1">${cabecalhos.map((titulo, indice) => celulaTexto(colunas[indice], 1, titulo, 1)).join("")}</row>`
   ];
 
-  for (const leitura of estado.historico) {
-    linhas.push([
-      leitura.hora.toISOString(),
-      leitura.temperatura,
-      leitura.umidade,
-      leitura.luminosidade,
-      leitura.pessoas
-    ].join(","));
+  for (const [indice, leitura] of estado.historico.entries()) {
+    const linha = indice + 2;
+    const data = new Date(leitura.hora);
+    linhasPlanilha.push(`<row r="${linha}">${[
+      celulaTexto("A", linha, data.toLocaleDateString("pt-BR")),
+      celulaTexto("B", linha, data.toLocaleTimeString("pt-BR")),
+      celulaNumero("C", linha, leitura.temperatura.toFixed(1)),
+      celulaNumero("D", linha, leitura.umidade),
+      celulaNumero("E", linha, leitura.luminosidade),
+      celulaNumero("F", linha, leitura.pessoas)
+    ].join("")}</row>`);
   }
 
-  const blob = new Blob(
-    [linhas.join("\n")],
-    { type: "text/csv;charset=utf-8" }
-  );
+  const ultimaLinha = Math.max(2, estado.historico.length + 1);
+  const planilha = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <cols>
+    <col min="1" max="1" width="14" customWidth="1"/>
+    <col min="2" max="2" width="12" customWidth="1"/>
+    <col min="3" max="3" width="19" customWidth="1"/>
+    <col min="4" max="4" width="15" customWidth="1"/>
+    <col min="5" max="5" width="19" customWidth="1"/>
+    <col min="6" max="6" width="12" customWidth="1"/>
+  </cols>
+  <sheetData>${linhasPlanilha.join("")}</sheetData>
+  <autoFilter ref="A1:F${ultimaLinha}"/>
+</worksheet>`;
+  const estilos = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="11"/><name val="Calibri"/></font></fonts>
+  <fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F4E78"/><bgColor indexed="64"/></patternFill></fill></fills>
+  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" applyFont="1" applyFill="1" applyAlignment="1" xfId="0"><alignment horizontal="center" vertical="center"/></xf></cellXfs>
+  <cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
+</styleSheet>`;
+  const blob = criarArquivoZip([
+    ["[Content_Types].xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
+    ["_rels/.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+    ["xl/workbook.xml", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Histórico de sensores" sheetId="1" r:id="rId1"/></sheets></workbook>`],
+    ["xl/_rels/workbook.xml.rels", `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
+    ["xl/styles.xml", estilos],
+    ["xl/worksheets/sheet1.xml", planilha]
+  ]);
+
+  const agora = new Date();
+  const dataArquivo = [
+    agora.getFullYear(),
+    String(agora.getMonth() + 1).padStart(2, "0"),
+    String(agora.getDate()).padStart(2, "0")
+  ].join("-");
+  const horaArquivo = [
+    String(agora.getHours()).padStart(2, "0"),
+    String(agora.getMinutes()).padStart(2, "0")
+  ].join("-");
 
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
 
   link.href = url;
-  link.download = "historico.csv";
+  link.download = `historico-sensores_${dataArquivo}_${horaArquivo}.xlsx`;
   document.body.appendChild(link);
   link.click();
   link.remove();
 
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-  registrarEvento("Histórico baixado em CSV");
+  registrarEvento("Histórico baixado em Excel");
   desenhar();
 }
 
@@ -1244,6 +1380,7 @@ class VozController {
 
 function configurarVoz() {
   const widget = $("voz-widget");
+  const botaoToggle = $("btn-toggle-voz");
   const botao = $("btn-voz");
   const status = $("voz-status");
   const transcricao = $("voz-texto");
@@ -1251,7 +1388,24 @@ function configurarVoz() {
   const icoEstado = $("ico-voz-estado");
   const statusDot = $("voz-status-dot");
 
-  if (!botao || !status || !transcricao) return;
+  if (!widget || !botaoToggle || !botao || !status || !transcricao) return;
+
+  const alternarPainelVoz = (aberto) => {
+    widget.hidden = !aberto;
+    botaoToggle.setAttribute("aria-expanded", String(aberto));
+    botaoToggle.setAttribute(
+      "aria-label",
+      aberto ? "Ocultar assistente de voz" : "Abrir assistente de voz"
+    );
+    botaoToggle.title = aberto ? "Ocultar assistente de voz" : "Assistente de voz";
+
+    // O painel nunca fica oculto enquanto o microfone continua ativo.
+    if (!aberto && controleVoz) controleVoz.parar();
+  };
+
+  botaoToggle.addEventListener("click", () => {
+    alternarPainelVoz(widget.hidden);
+  });
 
   if (!VozController.suportado()) {
     botao.disabled = true;
@@ -1361,7 +1515,7 @@ function configurarVoz() {
           break;
 
         case "baixar_historico":
-          baixarCsv();
+          baixarHistoricoExcel();
           break;
 
         case "limpar_historico":
@@ -1461,7 +1615,7 @@ function iniciar() {
 
   $("btn-baixar").addEventListener(
     "click",
-    baixarCsv
+    baixarHistoricoExcel
   );
 
   $("btn-limpar").addEventListener(
