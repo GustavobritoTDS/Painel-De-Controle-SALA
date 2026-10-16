@@ -6,913 +6,14 @@
 <title>SENAI Smart Class | Monitoramento Inteligente</title>
 <script>
 /* Aplica o tema salvo ANTES de desenhar a página (evita piscar) */
-try { document.documentElement.dataset.tema = localStorage.getItem("tema") || "escuro"; } catch (e) {}
+try {
+  const temaSalvo = localStorage.getItem("tema");
+  document.documentElement.dataset.tema = temaSalvo === "claro" ? "claro" : "escuro";
+} catch (e) {
+  document.documentElement.dataset.tema = "escuro";
+}
 </script>
-<style>
-/* =====================================================
-   SENAI SMART CLASS — DESIGN SYSTEM "SMART ROOM / TECH"
-   ===================================================== */
-
-/* ===== VARIÁVEIS DO SISTEMA (TEMAS) ===== */
-:root {
-  color-scheme: dark;
-  --fundo: #070e1e;
-  --fundo-grad-1: rgba(37, 99, 235, 0.16);
-  --fundo-grad-2: rgba(6, 182, 212, 0.14);
-  --vidro: rgba(15, 27, 53, 0.65);
-  --vidro-hover: rgba(22, 38, 74, 0.75);
-  --borda: rgba(147, 197, 253, 0.14);
-  --borda-hover: rgba(34, 211, 238, 0.4);
-  --borda-foco: #22d3ee;
-  --texto: #f1f5f9;
-  --texto-forte: #ffffff;
-  --suave: #94a3b8;
-  --ciano: #22d3ee;
-  --azul: #3b82f6;
-  --grade: rgba(148, 163, 184, 0.15);
-  --grafico-1: #22d3ee;
-  --grafico-2: #60a5fa;
-  --bom: #38bdf8;
-  --ruim: #f43f5e;
-  --aviso-bg: rgba(251, 146, 60, 0.12);
-  --aviso: #fb923c;
-  --btn-bg: linear-gradient(135deg, #06b6d4, #2563eb);
-  --btn-txt: #ffffff;
-  --chip: rgba(34, 211, 238, 0.12);
-  --sombra: 0 10px 32px -4px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  --sombra-card: 0 8px 24px -4px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  --raio: 16px;
-  --raio-sm: 10px;
-  --transicao: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-:root[data-tema="claro"] {
-  color-scheme: light;
-  --fundo: #f0f4f9;
-  --fundo-grad-1: rgba(37, 99, 235, 0.08);
-  --fundo-grad-2: rgba(6, 182, 212, 0.08);
-  --vidro: rgba(255, 255, 255, 0.8);
-  --vidro-hover: rgba(255, 255, 255, 0.95);
-  --borda: rgba(29, 78, 216, 0.12);
-  --borda-hover: rgba(6, 182, 212, 0.5);
-  --borda-foco: #0891b2;
-  --texto: #0f172a;
-  --texto-forte: #020617;
-  --suave: #64748b;
-  --ciano: #0891b2;
-  --azul: #2563eb;
-  --grade: rgba(100, 116, 139, 0.16);
-  --grafico-1: #0891b2;
-  --grafico-2: #2563eb;
-  --bom: #0284c7;
-  --ruim: #e11d48;
-  --aviso-bg: #fff7ed;
-  --aviso: #c2410c;
-  --btn-bg: linear-gradient(135deg, #0891b2, #2563eb);
-  --btn-txt: #ffffff;
-  --chip: rgba(8, 145, 178, 0.12);
-  --sombra: 0 10px 30px -4px rgba(30, 58, 138, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  --sombra-card: 0 8px 24px -4px rgba(30, 58, 138, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-}
-
-/* ===== BASE & TIPOGRAFIA ===== */
-* {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  color: var(--texto);
-  line-height: 1.5;
-  background:
-    radial-gradient(1000px 600px at 85% -10%, var(--fundo-grad-1), transparent 60%),
-    radial-gradient(800px 600px at 0% 100%, var(--fundo-grad-2), transparent 60%),
-    var(--fundo);
-  background-attachment: fixed;
-  -webkit-font-smoothing: antialiased;
-}
-
-h3, h4 {
-  color: var(--texto-forte);
-  font-weight: 700;
-  letter-spacing: -0.015em;
-  margin: 0.5rem 0 1rem;
-}
-
-.layout {
-  display: flex;
-  min-height: 100vh;
-}
-
-.ico {
-  width: 1.2em;
-  height: 1.2em;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  flex: none;
-  vertical-align: -0.2em;
-}
-
-/* Acessibilidade: foco visível */
-button:focus-visible,
-input:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--borda-foco);
-  outline-offset: 3px;
-}
-
-/* ===== VIDRO (GLASSMORPHISM) ===== */
-.sidebar,
-.banner,
-.card,
-canvas.grafico,
-.voz-widget,
-.evento {
-  background: var(--vidro);
-  border: 1px solid var(--borda);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  box-shadow: var(--sombra);
-  transition: border-color var(--transicao), box-shadow var(--transicao), transform var(--transicao);
-}
-
-/* ===== MENU LATERAL ===== */
-.sidebar {
-  width: 260px;
-  flex-shrink: 0;
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  padding: 24px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  border-width: 0 1px 0 0;
-  border-radius: 0;
-  z-index: 10;
-}
-
-.marca {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--borda);
-}
-
-.marca .logo {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: var(--btn-bg);
-  color: var(--btn-txt);
-  box-shadow: 0 4px 16px rgba(6, 182, 212, 0.35);
-}
-
-.marca .logo .ico {
-  width: 24px;
-  height: 24px;
-}
-
-.marca b {
-  display: block;
-  font-size: 1.1rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: var(--texto-forte);
-}
-
-.marca small {
-  color: var(--ciano);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.menu {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.aba-btn {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 12px 14px;
-  border: 1px solid transparent;
-  border-radius: 12px;
-  background: none;
-  color: var(--suave);
-  font: 600 0.95rem inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: all var(--transicao);
-}
-
-.aba-btn:hover {
-  background: var(--chip);
-  color: var(--texto-forte);
-  transform: translateX(3px);
-}
-
-.aba-btn.ativa {
-  background: var(--chip);
-  color: var(--texto-forte);
-  border-color: rgba(34, 211, 238, 0.3);
-  box-shadow: inset 3px 0 0 var(--ciano), 0 4px 16px -2px rgba(6, 182, 212, 0.2);
-}
-
-.aba-btn.ativa .ico {
-  color: var(--ciano);
-  filter: drop-shadow(0 0 8px var(--ciano));
-}
-
-.tema-btn {
-  margin-top: auto;
-  border-radius: 12px;
-  padding: 11px 14px;
-  justify-content: center;
-}
-
-/* ===== CONTEÚDO PRINCIPAL ===== */
-.conteudo {
-  flex: 1;
-  min-width: 0;
-  max-width: 1320px;
-  padding: 2.2rem 2.5rem;
-}
-
-.banner {
-  padding: 22px 28px;
-  border-radius: var(--raio);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 22px;
-  position: relative;
-  overflow: hidden;
-}
-
-.banner::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--ciano), var(--azul), transparent);
-}
-
-.banner .titulo {
-  font-size: 1.85rem;
-  font-weight: 800;
-  color: var(--texto-forte);
-  letter-spacing: -0.025em;
-}
-
-.banner .subtitulo {
-  color: var(--suave);
-  font-size: 0.94rem;
-  margin-top: 4px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.banner .selo {
-  padding: 2px 10px;
-  border: 1px solid var(--borda);
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: rgba(34, 211, 238, 0.08);
-  color: var(--ciano);
-}
-
-.banner .pills {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.banner .status {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  background: var(--chip);
-  border: 1px solid var(--borda);
-  color: var(--texto-forte);
-}
-
-.banner .status::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.banner .status.ok::before {
-  background: var(--bom);
-  box-shadow: 0 0 10px var(--bom);
-}
-
-.banner .status.aviso::before {
-  background: var(--aviso);
-  box-shadow: 0 0 10px var(--aviso);
-  animation: pulso-aviso 1.4s infinite ease-in-out;
-}
-
-.banner .status.modo-auto::before {
-  background: var(--ciano);
-  box-shadow: 0 0 8px var(--ciano);
-}
-
-.banner .status.modo-manual::before {
-  background: var(--suave);
-}
-
-@keyframes pulso-aviso {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.85); }
-}
-
-/* ===== CARDS E MÉTRICAS ===== */
-.card {
-  border-radius: var(--raio);
-  padding: 20px 22px;
-  box-shadow: var(--sombra-card);
-}
-
-.card:hover {
-  border-color: var(--borda-hover);
-}
-
-.metricas {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 18px;
-  margin-bottom: 20px;
-}
-
-.metrica {
-  position: relative;
-  overflow: hidden;
-}
-
-.metrica:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-
-.metrica .rotulo {
-  color: var(--suave);
-  font-size: 0.88rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.metrica .rotulo .ico {
-  color: var(--ciano);
-  filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.5));
-}
-
-.metrica .valor {
-  font-size: 2.35rem;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.035em;
-  margin: 8px 0 4px;
-  color: var(--texto-forte);
-}
-
-.metrica .delta {
-  font-size: 0.82rem;
-  font-weight: 700;
-  min-height: 1.4em;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.delta.bom { color: var(--bom); }
-.delta.ruim { color: var(--ruim); }
-.delta.neutro { color: var(--suave); }
-
-.metrica-pessoas {
-  max-width: 340px;
-  margin-bottom: 18px;
-}
-
-/* ===== BOTÕES ===== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border: 1px solid var(--borda);
-  background: var(--vidro);
-  color: var(--texto-forte);
-  border-radius: var(--raio-sm);
-  padding: 10px 18px;
-  font: 600 0.95rem inherit;
-  cursor: pointer;
-  transition: all var(--transicao);
-}
-
-.btn:hover:not(:disabled) {
-  border-color: var(--ciano);
-  color: var(--ciano);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px -2px rgba(6, 182, 212, 0.25);
-}
-
-.btn:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.btn.primario {
-  background: var(--btn-bg);
-  border-color: transparent;
-  color: var(--btn-txt);
-  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.35);
-}
-
-.btn.primario:hover:not(:disabled) {
-  color: var(--btn-txt);
-  filter: brightness(1.1);
-  box-shadow: 0 6px 24px rgba(6, 182, 212, 0.45);
-}
-
-.linha-botoes {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-wrap: wrap;
-  margin: 14px 0;
-}
-
-.linha {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-}
-
-/* ===== INTERRUPTORES (TOGGLE SWITCHES) ===== */
-input[type=checkbox] {
-  appearance: none;
-  -webkit-appearance: none;
-  position: relative;
-  flex-shrink: 0;
-  width: 48px;
-  height: 26px;
-  margin: 0;
-  border-radius: 999px;
-  background: rgba(148, 163, 184, 0.3);
-  border: 1px solid var(--borda);
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-input[type=checkbox]::before {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-input[type=checkbox]:checked {
-  background: var(--azul);
-  border-color: var(--ciano);
-  box-shadow: 0 0 14px rgba(59, 130, 246, 0.5);
-}
-
-input[type=checkbox]:checked::before {
-  transform: translateX(22px);
-}
-
-input[type=checkbox]:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-input[type=range] {
-  width: 100%;
-  accent-color: var(--ciano);
-  cursor: pointer;
-  height: 6px;
-  border-radius: 999px;
-}
-
-.config label {
-  display: block;
-  margin: 18px 0 8px;
-  font-size: 0.94rem;
-  font-weight: 500;
-}
-
-.config label.linha {
-  display: flex;
-}
-
-.config {
-  max-width: 560px;
-}
-
-.legenda {
-  color: var(--suave);
-  font-size: 0.9rem;
-  margin-top: 0;
-}
-
-/* ===== ALERTAS ===== */
-.alerta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  border-radius: 12px;
-  margin: 10px 0;
-  font-size: 0.96rem;
-  border-left: 4px solid transparent;
-  transition: all var(--transicao);
-}
-
-.alerta::before {
-  content: "";
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.alerta.ok {
-  background: var(--chip);
-  color: var(--bom);
-  border-left-color: var(--ciano);
-}
-
-.alerta.ok::before {
-  background: var(--bom);
-  box-shadow: 0 0 8px var(--bom);
-}
-
-.alerta.aviso {
-  background: var(--aviso-bg);
-  color: var(--aviso);
-  border-left-color: #fb923c;
-}
-
-.alerta.aviso::before {
-  background: #fb923c;
-  box-shadow: 0 0 8px #fb923c;
-}
-
-/* ===== ABAS E ANIMAÇÃO DE TRANSIÇÃO ===== */
-.aba {
-  display: none;
-  padding-top: 10px;
-}
-
-@keyframes entradaAba {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.aba.ativa {
-  display: block;
-  animation: entradaAba 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-select {
-  display: block;
-  margin: 8px 0 16px;
-  padding: 10px 14px;
-  border: 1px solid var(--borda);
-  border-radius: var(--raio-sm);
-  background: var(--vidro);
-  color: var(--texto-forte);
-  font-size: 0.95rem;
-  cursor: pointer;
-}
-
-select option {
-  background: var(--fundo);
-  color: var(--texto);
-}
-
-canvas.grafico {
-  width: 100%;
-  height: 290px;
-  display: block;
-  border-radius: var(--raio);
-  padding: 0;
-}
-
-/* ===== CONTROLES DE EQUIPAMENTOS ===== */
-.duas-colunas {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  margin: 18px 0;
-}
-
-.duas-colunas h3 {
-  margin-top: 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.duas-colunas .card:has(.pill.on) {
-  border-color: var(--ciano);
-  box-shadow: 0 0 0 1px var(--ciano), 0 12px 36px -4px rgba(34, 211, 238, 0.3);
-}
-
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  margin-bottom: 14px;
-}
-
-.pill::before {
-  content: "";
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
-}
-
-.pill.on {
-  background: var(--chip);
-  color: var(--bom);
-  border: 1px solid var(--ciano);
-}
-
-.pill.on::before {
-  background: var(--bom);
-  box-shadow: 0 0 10px var(--bom);
-}
-
-.pill.off {
-  background: rgba(148, 163, 184, 0.15);
-  color: var(--suave);
-  border: 1px solid var(--borda);
-}
-
-.pill.off::before {
-  background: var(--suave);
-}
-
-.evento {
-  padding: 10px 14px;
-  border-left: 3px solid var(--ciano);
-  border-radius: var(--raio-sm);
-  margin-bottom: 8px;
-  font-size: 0.92rem;
-  box-shadow: none;
-}
-
-.evento b {
-  color: var(--ciano);
-}
-
-.vazio {
-  color: var(--suave);
-  font-size: 0.92rem;
-  font-style: italic;
-}
-
-/* ===== CONTROLE DE VOZ FLUTUANTE ===== */
-.voz-widget {
-  position: fixed;
-  right: 1.5rem;
-  bottom: 1.5rem;
-  z-index: 1000;
-  width: min(320px, calc(100vw - 2rem));
-  padding: 1rem;
-  border-radius: 16px;
-  font: 0.88rem/1.4 system-ui, sans-serif;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.45);
-}
-
-.voz-cabecalho {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-#btn-voz {
-  min-height: 42px;
-  padding: 0.5rem 0.9rem;
-  color: var(--btn-txt);
-  background: var(--btn-bg);
-  border: 0;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  box-shadow: 0 4px 14px rgba(6, 182, 212, 0.35);
-  transition: all var(--transicao);
-}
-
-#btn-voz:hover:not(:disabled) {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-}
-
-#btn-voz:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-#voz-status {
-  min-width: 0;
-  color: var(--suave);
-  font-size: 0.8rem;
-  overflow-wrap: anywhere;
-}
-
-.voz-indicador {
-  width: 0.6rem;
-  height: 0.6rem;
-  flex: 0 0 auto;
-  border-radius: 50%;
-  background: var(--suave);
-}
-
-.voz-widget.falando .voz-indicador {
-  background: var(--ciano);
-  animation: pulso-voz 1.1s ease-out infinite;
-}
-
-.voz-transcricao {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.75rem;
-  padding-top: 0.65rem;
-  border-top: 1px solid var(--borda);
-  color: var(--suave);
-  font-size: 0.8rem;
-}
-
-#voz-texto {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--texto-forte);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-@keyframes pulso-voz {
-  0% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0.6); }
-  70% { box-shadow: 0 0 0 0.6rem rgba(34, 211, 238, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(34, 211, 238, 0); }
-}
-
-/* ===== TEMA CLARO / ESCURO (ÍCONES) ===== */
-:root[data-tema="claro"] .ico-sol,
-:root:not([data-tema="claro"]) .ico-lua {
-  display: none;
-}
-
-/* ===== ACESSIBILIDADE: MOVIMENTO REDUZIDO ===== */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
-}
-
-/* ===== RESPONSIVIDADE (TABLET E CELULAR) ===== */
-@media (max-width: 900px) {
-  .layout {
-    flex-direction: column;
-  }
-
-  .sidebar {
-    width: 100%;
-    height: auto;
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: center;
-    border-width: 0 0 1px 0;
-    padding: 14px 18px;
-  }
-
-  .marca {
-    margin: 0;
-    padding: 0;
-    border: none;
-  }
-
-  .menu {
-    order: 3;
-    flex-direction: row;
-    width: 100%;
-    overflow-x: auto;
-    padding-top: 8px;
-  }
-
-  .aba-btn {
-    width: auto;
-    white-space: nowrap;
-    padding: 9px 14px;
-  }
-
-  .tema-btn {
-    margin: 0 0 0 auto;
-    padding: 8px 14px;
-  }
-
-  .conteudo {
-    padding: 1.4rem;
-    padding-bottom: 180px;
-  }
-
-  .metricas {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .duas-colunas {
-    grid-template-columns: 1fr;
-  }
-
-  .banner .titulo {
-    font-size: 1.45rem;
-  }
-}
-
-@media (max-width: 500px) {
-  .metricas {
-    grid-template-columns: 1fr;
-  }
-
-  .voz-widget {
-    bottom: 0.75rem;
-    right: 0.75rem;
-  }
-
-  .banner {
-    padding: 18px 20px;
-  }
-
-  .conteudo {
-    padding: 1rem;
-    padding-bottom: 180px;
-  }
-}
-</style>
+<link rel="stylesheet" href="visual.css">
 <script src="app.js" defer></script>
 </head>
 <body>
@@ -934,6 +35,13 @@ canvas.grafico {
   <symbol id="i-lixo" viewBox="0 0 24 24"><path d="M3 6h18M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></symbol>
   <symbol id="i-sol" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/></symbol>
   <symbol id="i-lua" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></symbol>
+  <symbol id="i-mic" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2.5"/></symbol>
+  <symbol id="i-relogio" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="i-onda" viewBox="0 0 24 24"><path d="M2 10v4M6 6v12M10 3v18M14 8v8M18 5v14M22 10v4"/></symbol>
+  <symbol id="i-trend-up" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
+  <symbol id="i-trend-down" viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
 </svg>
 
 <div class="layout">
@@ -946,10 +54,10 @@ canvas.grafico {
     </div>
 
     <nav class="menu" aria-label="Seções do dashboard" role="tablist">
-      <button class="aba-btn ativa" data-aba="sensores" role="tab" aria-selected="true"><svg class="ico"><use href="#i-grafico"/></svg>Sensores</button>
-      <button class="aba-btn" data-aba="controles" role="tab" aria-selected="false"><svg class="ico"><use href="#i-power"/></svg>Controles</button>
-      <button class="aba-btn" data-aba="verificacao" role="tab" aria-selected="false"><svg class="ico"><use href="#i-users"/></svg>Verificação</button>
-      <button class="aba-btn" data-aba="config" role="tab" aria-selected="false"><svg class="ico"><use href="#i-ajustes"/></svg>Configurações</button>
+      <button class="aba-btn ativa" id="aba-btn-sensores" data-aba="sensores" type="button" role="tab" aria-controls="aba-sensores" aria-selected="true"><svg class="ico"><use href="#i-grafico"/></svg>Sensores</button>
+      <button class="aba-btn" id="aba-btn-controles" data-aba="controles" type="button" role="tab" aria-controls="aba-controles" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-power"/></svg>Controles</button>
+      <button class="aba-btn" id="aba-btn-verificacao" data-aba="verificacao" type="button" role="tab" aria-controls="aba-verificacao" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-users"/></svg>Verificação</button>
+      <button class="aba-btn" id="aba-btn-config" data-aba="config" type="button" role="tab" aria-controls="aba-config" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-ajustes"/></svg>Configurações</button>
     </nav>
 
     <button class="btn tema-btn" id="btn-tema" type="button">
@@ -964,15 +72,46 @@ canvas.grafico {
     <!-- BANNER -->
     <header class="banner">
       <div>
-        <div class="titulo">Painel da sala</div>
+        <h1 class="titulo">Painel da sala</h1>
         <div class="subtitulo">Monitoramento inteligente <span class="selo">Dados simulados</span></div>
       </div>
       <div class="pills">
-        <span class="status" id="banner-status"></span>
-        <span class="status" id="banner-modo"></span>
-        <span class="status" id="banner-hora"></span>
+        <span class="status hora-pill" id="banner-hora" title="Horário da última sincronização">
+          <svg class="ico"><use href="#i-relogio"/></svg>
+          <span id="banner-hora-texto">--:--:--</span>
+        </span>
       </div>
     </header>
+
+    <!-- ASSISTENTE DE VOZ -->
+    <section id="voz-widget" class="voz-widget" aria-label="Assistente de voz">
+      <div class="voz-identidade">
+        <span class="voz-icone-principal" aria-hidden="true">
+          <svg class="ico"><use href="#i-mic"/></svg>
+          <span class="voz-status-dot" id="voz-status-dot"></span>
+        </span>
+        <div class="voz-meta">
+          <span class="voz-rotulo-badge">Assistente de voz</span>
+          <span id="voz-status" class="voz-status-texto" aria-live="polite">Pronto para ouvir</span>
+        </div>
+        <div class="voz-ondas" id="voz-ondas" aria-hidden="true">
+          <span class="voz-barra"></span>
+          <span class="voz-barra"></span>
+          <span class="voz-barra"></span>
+          <span class="voz-barra"></span>
+        </div>
+      </div>
+
+      <div class="voz-transcricao-bloco">
+        <span class="voz-subrotulo">Último comando</span>
+        <output id="voz-texto" class="voz-transcricao-saida" aria-live="polite">Nenhum comando recebido</output>
+      </div>
+
+      <button id="btn-voz" class="btn-voz-interativo" type="button" aria-pressed="false">
+        <svg class="ico ico-mic" id="ico-voz-estado" aria-hidden="true"><use href="#i-mic"/></svg>
+        <span id="btn-voz-texto">Iniciar voz</span>
+      </button>
+    </section>
 
     <!-- SENSORES -->
     <section class="metricas">
@@ -1001,23 +140,86 @@ canvas.grafico {
 
     <!-- ABA SENSORES -->
     <section class="aba ativa" id="aba-sensores" role="tabpanel" aria-labelledby="aba-btn-sensores">
-      <h3>Histórico de sensores</h3>
-      <label for="sensor-grafico">Sensor</label>
-      <select id="sensor-grafico">
-        <option value="temperatura">Temperatura</option>
-        <option value="umidade">Umidade</option>
-        <option value="luminosidade">Luminosidade</option>
-      </select>
-      <canvas class="grafico" id="grafico-sensor"></canvas>
-      <div class="linha-botoes">
-        <button class="btn" id="btn-baixar"><svg class="ico"><use href="#i-baixar"/></svg>Baixar histórico (CSV)</button>
-        <button class="btn" id="btn-limpar"><svg class="ico"><use href="#i-lixo"/></svg>Limpar histórico</button>
+      <div class="grafico-container-card">
+        <div class="grafico-topo">
+          <div class="grafico-titulos">
+            <h2>Histórico de Sensores</h2>
+            <div class="grafico-status-badge">
+              <span class="ponto-ao-vivo" aria-hidden="true"></span>
+              <span>Histórico recente das leituras simuladas</span>
+            </div>
+          </div>
+
+          <!-- Seletor segmentado do sensor exibido -->
+          <div class="seletor-sensores" role="group" aria-label="Sensor exibido no gráfico">
+            <button type="button" class="btn-sensor-tab ativo" data-sensor="temperatura" aria-pressed="true">
+              <svg class="ico"><use href="#i-temp"/></svg>
+              <span>Temperatura</span>
+            </button>
+            <button type="button" class="btn-sensor-tab" data-sensor="umidade" aria-pressed="false">
+              <svg class="ico"><use href="#i-gota"/></svg>
+              <span>Umidade</span>
+            </button>
+            <button type="button" class="btn-sensor-tab" data-sensor="luminosidade" aria-pressed="false">
+              <svg class="ico"><use href="#i-luz"/></svg>
+              <span>Luminosidade</span>
+            </button>
+            <select id="sensor-grafico" hidden>
+              <option value="temperatura">Temperatura</option>
+              <option value="umidade">Umidade</option>
+              <option value="luminosidade">Luminosidade</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Estatísticas do Gráfico (KPIs rápidos) -->
+        <div class="grafico-kpis" aria-label="Estatísticas do histórico">
+          <div class="kpi-mini">
+            <span class="kpi-legenda">Atual</span>
+            <strong class="kpi-valor" id="graf-kpi-atual">--</strong>
+          </div>
+          <div class="kpi-mini">
+            <span class="kpi-legenda">Mínima</span>
+            <strong class="kpi-valor" id="graf-kpi-min">--</strong>
+          </div>
+          <div class="kpi-mini">
+            <span class="kpi-legenda">Média</span>
+            <strong class="kpi-valor" id="graf-kpi-med">--</strong>
+          </div>
+          <div class="kpi-mini">
+            <span class="kpi-legenda">Máxima</span>
+            <strong class="kpi-valor" id="graf-kpi-max">--</strong>
+          </div>
+          <div class="kpi-mini">
+            <span class="kpi-legenda">Tendência</span>
+            <strong class="kpi-valor kpi-tendencia" id="graf-kpi-tend">
+              <span id="graf-kpi-tend-texto">Estável</span>
+            </strong>
+          </div>
+        </div>
+
+        <!-- Área do Canvas com Curva Suave e Tooltip Flutuante -->
+        <div class="grafico-canvas-wrapper" id="grafico-wrapper">
+          <canvas class="grafico" id="grafico-sensor" role="img" aria-label="Gráfico de telemetria do sensor selecionado com curvas suaves e dados históricos">Gráfico de telemetria.</canvas>
+          <div id="grafico-tooltip" class="grafico-tooltip" hidden></div>
+        </div>
+
+        <div class="grafico-rodape">
+          <div class="grafico-legenda-eixos">
+            <span class="legenda-item"><span class="linha-amostra"></span> Curva suavizada com área gradiente</span>
+            <span class="legenda-item"><span class="ponto-amostra"></span> Passe o cursor sobre o gráfico para detalhes</span>
+          </div>
+          <div class="linha-botoes">
+            <button class="btn" id="btn-baixar"><svg class="ico"><use href="#i-baixar"/></svg>Baixar histórico (CSV)</button>
+            <button class="btn" id="btn-limpar"><svg class="ico"><use href="#i-lixo"/></svg>Limpar histórico</button>
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- ABA CONTROLES -->
-    <section class="aba" id="aba-controles" role="tabpanel">
-      <h3>Controles da sala</h3>
+    <section class="aba" id="aba-controles" role="tabpanel" aria-labelledby="aba-btn-controles" hidden>
+      <h2>Controles da sala</h2>
       <div class="linha-botoes">
         <label class="linha" for="modo-auto"><input type="checkbox" id="modo-auto">Modo automático</label>
         <button class="btn primario" id="btn-desligar-tudo"><svg class="ico"><use href="#i-power"/></svg>Desligar tudo (sem aula)</button>
@@ -1039,19 +241,34 @@ canvas.grafico {
     </section>
 
     <!-- ABA VERIFICAÇÃO -->
-    <section class="aba" id="aba-verificacao" role="tabpanel">
-      <h3>Verificação de Pessoas</h3>
-      <div class="card metrica metrica-pessoas">
-        <div class="rotulo"><svg class="ico"><use href="#i-users"/></svg>Pessoas nesta sala</div>
-        <div class="valor" id="m-pessoas">--</div>
-        <div class="delta" id="m-pessoas-delta"></div>
+    <section class="aba" id="aba-verificacao" role="tabpanel" aria-labelledby="aba-btn-verificacao" hidden>
+      <div class="grafico-container-card">
+        <div class="grafico-topo">
+          <div class="grafico-titulos">
+            <h2>Verificação de Pessoas</h2>
+            <div class="grafico-status-badge">
+              <span class="ponto-ao-vivo" aria-hidden="true"></span>
+              <span>Detecção e histórico de ocupação da sala</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card metrica metrica-pessoas">
+          <div class="rotulo"><svg class="ico"><use href="#i-users"/></svg>Pessoas nesta sala</div>
+          <div class="valor" id="m-pessoas">--</div>
+          <div class="delta" id="m-pessoas-delta"></div>
+        </div>
+
+        <div class="grafico-canvas-wrapper" id="grafico-pessoas-wrapper">
+          <canvas class="grafico" id="grafico-pessoas" role="img" aria-label="Gráfico do histórico de pessoas na sala">Gráfico do histórico de pessoas na sala.</canvas>
+          <div id="grafico-pessoas-tooltip" class="grafico-tooltip" hidden></div>
+        </div>
       </div>
-      <canvas class="grafico" id="grafico-pessoas"></canvas>
     </section>
 
     <!-- ABA CONFIGURAÇÕES -->
-    <section class="aba" id="aba-config" role="tabpanel">
-      <h3>Configurações</h3>
+    <section class="aba" id="aba-config" role="tabpanel" aria-labelledby="aba-btn-config" hidden>
+      <h2>Configurações</h2>
       <div class="card config">
         <p class="legenda">Ajuste as regras da automação sem mexer no código.</p>
         <label for="temp-alta">Temperatura para ligar o ar (°C): <b id="temp-alta-valor">28</b></label>
@@ -1066,19 +283,6 @@ canvas.grafico {
 
   </main>
 </div>
-
-<!-- CONTROLE DE VOZ -->
-<section id="voz-widget" class="voz-widget" aria-label="Comando de voz">
-  <div class="voz-cabecalho">
-    <button id="btn-voz" type="button" aria-pressed="false">Iniciar voz</button>
-    <span id="voz-indicador" class="voz-indicador" aria-hidden="true"></span>
-    <span id="voz-status" aria-live="polite">Microfone desligado</span>
-  </div>
-  <div class="voz-transcricao">
-    <span>Transcrição:</span>
-    <output id="voz-texto" aria-live="polite">Aguardando fala…</output>
-  </div>
-</section>
 
 </body>
 </html>
