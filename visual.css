@@ -1207,6 +1207,102 @@ canvas.grafico {
   }
 }
 
+/* ===== ASSISTENTE DE VOZ FLUTUANTE ===== */
+.voz-widget {
+  position: fixed;
+  right: 24px;
+  bottom: 92px;
+  z-index: 30;
+  display: grid;
+  width: min(360px, calc(100vw - 32px));
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin: 0;
+  padding: 18px;
+  overflow: visible;
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.12), transparent 55%),
+    var(--vidro);
+  border-color: var(--borda-hover);
+  box-shadow: var(--sombra), 0 16px 36px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+.voz-widget::before {
+  inset: 14px auto 14px 0;
+}
+
+.voz-identidade {
+  gap: 12px;
+}
+
+.voz-ondas {
+  margin-left: auto;
+}
+
+.voz-transcricao-bloco {
+  gap: 5px;
+  padding: 12px 0 0;
+  border: 0;
+  border-top: 1px solid var(--borda);
+}
+
+.btn-voz-interativo {
+  width: 100%;
+}
+
+.btn-toggle-voz {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 31;
+  display: grid;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  place-items: center;
+  color: var(--btn-txt);
+  background: var(--btn-bg);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  box-shadow: 0 8px 24px rgba(6, 182, 212, 0.36);
+  cursor: pointer;
+  transition: transform var(--transicao), filter var(--transicao), box-shadow var(--transicao);
+}
+
+.btn-toggle-voz .ico {
+  width: 22px;
+  height: 22px;
+}
+
+.btn-toggle-voz:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 11px 28px rgba(6, 182, 212, 0.48);
+}
+
+.btn-toggle-voz:active {
+  transform: scale(0.96);
+}
+
+.btn-toggle-voz[aria-expanded="true"] {
+  box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.18), 0 8px 24px rgba(6, 182, 212, 0.36);
+}
+
+@media (max-width: 480px) {
+  .voz-widget {
+    right: 16px;
+    bottom: 84px;
+    width: calc(100vw - 32px);
+  }
+
+  .btn-toggle-voz {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
 /* ===== TEMA CLARO / ESCURO (ÍCONES) ===== */
 :root[data-tema="claro"] .ico-sol,
 :root:not([data-tema="claro"]) .ico-lua {
