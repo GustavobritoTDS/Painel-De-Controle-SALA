@@ -54,7 +54,7 @@ window.senaiAuth = (() => {
     try {
       const { data, error } = await client
         .from("profiles")
-        .select("id,role,status,full_name")
+        .select("id,role,status,full_name,serie")
         .eq("id", user.id)
         .single();
 
@@ -69,8 +69,9 @@ window.senaiAuth = (() => {
       throw new Error("Sua conta de acesso está inativa ou bloqueada.");
     }
 
-    const role = (dadosPerfil?.role || user.user_metadata?.role || "ALUNO").toUpperCase();
-    const status = dadosPerfil?.status || "ATIVO";
+    if (!dadosPerfil) throw new Error("Não foi possível validar seu perfil. Tente entrar novamente.");
+    const role = dadosPerfil.role;
+    const status = dadosPerfil.status;
     const nomeCompleto = (dadosPerfil?.full_name || user.user_metadata?.full_name || user.email.split("@")[0]).trim();
 
     return {
@@ -78,6 +79,7 @@ window.senaiAuth = (() => {
       role: role,
       status: status,
       full_name: nomeCompleto,
+      serie: dadosPerfil.serie,
       email: user.email || "E-mail não disponível"
     };
   }
@@ -169,7 +171,13 @@ window.senaiAuth = (() => {
       body: { action, ...attrs }
     });
 
-    if (error) throw error;
+    if (error) {
+      let message = "Não foi possível concluir a operação. Tente novamente.";
+      if (error.context && typeof error.context.json === "function") {
+        try { message = (await error.context.json()).error || message; } catch { /* resposta sem JSON */ }
+      }
+      throw new Error(message);
+    }
     if (data?.error) throw new Error(data.error);
     return data;
   }
@@ -178,8 +186,9 @@ window.senaiAuth = (() => {
     if (!profile) return;
     document.body.dataset.senaiRole = profile.role;
     const administrador = isAdmin();
-    const tituloConta = administrador ? "Conta de Administrador" : "Conta de Aluno";
-    const funcao = administrador ? "Administrador (ADM)" : "Aluno (Leitura)";
+    const professor = profile.role === "PROFESSOR";
+    const tituloConta = administrador ? "Conta de Administrador" : professor ? "Conta de Professor" : "Conta de Aluno";
+    const funcao = administrador ? "Administrador (ADM)" : professor ? "Professor (Leitura)" : "Aluno (Leitura)";
     const nome = profile.full_name || profile.email.split("@")[0];
 
     if (!administrador) {
@@ -207,11 +216,93 @@ window.senaiAuth = (() => {
     preencher("#conta-nome", nome);
     preencher("#conta-resumo", administrador
       ? "Acesso administrativo com permissão de persistência e controle"
-      : "Acesso de aluno com monitoramento em tempo real");
+      : `Acesso de ${professor ? "professor" : "aluno"} com monitoramento em tempo real`);
     preencher("#conta-funcao", funcao);
     preencher("#conta-email", profile.email);
-    preencher("#conta-permissao", administrador ? "Acesso Total (ADM)" : "Observador (Aluno)");
+    preencher("#conta-permissao", administrador ? "Acesso Total (ADM)" : `Observador (${professor ? "Professor" : "Aluno"})`);
     preencher("#conta-status", profile.status === "ATIVO" ? "Conta ativa e verificada" : profile.status);
+    const serieItem = document.getElementById("conta-serie-item");
+    if (serieItem) serieItem.hidden = profile.role !== "ALUNO";
+    preencher("#conta-serie", profile.serie || "Não informada");
+    configurarGestaoContas();
+  }
+
+  function configurarGestaoContas() {
+    const painel = document.getElementById("gestao-contas");
+    if (!painel) return;
+    painel.hidden = !isAdmin();
+    if (!isAdmin() || painel.dataset.inicializado) return;
+    painel.dataset.inicializado = "true";
+    const form = document.getElementById("criar-conta-form");
+    const perfil = document.getElementById("novo-perfil");
+    const serie = document.getElementById("nova-serie");
+    const campoSerie = document.getElementById("nova-serie-campo");
+    const status = document.getElementById("criar-conta-status");
+    const atualizar = document.getElementById("btn-atualizar-contas");
+    const botao = document.getElementById("btn-criar-conta");
+    const ajustarSerie = () => {
+      const aluno = perfil.value === "ALUNO";
+      campoSerie.hidden = !aluno;
+      serie.disabled = !aluno;
+      serie.required = aluno;
+      if (!aluno) serie.value = "";
+      document.getElementById("novo-perfil-ajuda").textContent = perfil.value === "ADM"
+        ? "Administradores têm acesso total ao painel e podem criar outras contas."
+        : aluno ? "Alunos acompanham o painel e precisam informar a série."
+        : "Professores acompanham o painel. Não é necessário informar série.";
+    };
+    async function carregarContas() {
+      atualizar.disabled = true;
+      const aviso = document.getElementById("contas-lista-status");
+      aviso.textContent = "Carregando contas...";
+      try {
+        const { users } = await manage("list");
+        const lista = document.getElementById("contas-lista");
+        lista.replaceChildren();
+        for (const user of users || []) {
+          const linha = document.createElement("tr");
+          const valores = [user.full_name || "Nome não informado", user.role === "ADM" ? "Administrador" : user.role === "PROFESSOR" ? "Professor" : "Aluno", user.role === "ALUNO" ? user.serie || "Não informada" : "—", user.status === "ATIVO" ? "Ativo" : "Bloqueado"];
+          for (const valor of valores) {
+            const celula = document.createElement("td");
+            celula.textContent = valor;
+            linha.append(celula);
+          }
+          lista.append(linha);
+        }
+        aviso.textContent = users?.length ? `${users.length} conta(s) cadastrada(s).` : "Nenhuma conta cadastrada.";
+      } catch (error) { aviso.textContent = error.message; }
+      finally { atualizar.disabled = false; }
+    }
+    perfil.addEventListener("change", ajustarSerie);
+    atualizar.addEventListener("click", carregarContas);
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (botao.disabled || !form.reportValidity()) return;
+      const nome = document.getElementById("novo-nome").value.trim();
+      const senha = document.getElementById("nova-senha");
+      botao.disabled = true;
+      botao.textContent = "Criando conta...";
+      status.hidden = false;
+      status.textContent = "Salvando o novo acesso...";
+      status.dataset.tipo = "info";
+      try {
+        await manage("create", { full_name: nome, email: document.getElementById("novo-email").value.trim(), password: senha.value, role: perfil.value, serie: perfil.value === "ALUNO" ? serie.value.trim() : null });
+        status.textContent = `Conta de ${nome} criada. O usuário já pode entrar com o e-mail e a senha cadastrados.`;
+        status.dataset.tipo = "sucesso";
+        form.reset();
+        ajustarSerie();
+        await carregarContas();
+      } catch (error) {
+        status.textContent = error.message;
+        status.dataset.tipo = "erro";
+      } finally {
+        senha.value = "";
+        botao.disabled = false;
+        botao.textContent = "Criar conta";
+      }
+    });
+    ajustarSerie();
+    carregarContas();
   }
 
   async function start(init, state, render) {
