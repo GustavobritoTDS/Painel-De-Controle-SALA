@@ -152,3 +152,10 @@ test('falha ao atualizar Auth não anuncia sucesso nem executa gravação separa
   assert.match((await response.json()).error, /Já existe/);
   assert.equal(audits.length, 0);
 });
+
+test('alteração legada de perfil também sincroniza app_metadata', async () => {
+  const { send, updated } = setup({ targetRole: 'ADM' });
+  assert.equal((await send({ action: 'set_role', user_id: edit.user_id, role: 'ALUNO', serie: '2º ano' })).status, 200);
+  assert.equal(updated[0].attrs.app_metadata.role, 'ALUNO');
+  assert.equal(updated[0].attrs.user_metadata.serie, '2º ano');
+});
