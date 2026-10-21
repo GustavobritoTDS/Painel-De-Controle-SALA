@@ -14,6 +14,9 @@ try {
 }
 </script>
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="senai-auth.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js" defer></script>
+<script src="senai-auth.js" defer></script>
 <script src="app.js" defer></script>
 </head>
 <body>
@@ -42,7 +45,59 @@ try {
   <symbol id="i-trend-up" viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></symbol>
   <symbol id="i-trend-down" viewBox="0 0 24 24"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></symbol>
   <symbol id="i-check" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></symbol>
 </svg>
+
+<!-- TELA DE LOGIN (PROTEÇÃO DE ACESSO DO PAINEL) -->
+<div id="senai-login" role="dialog" aria-modal="true" aria-labelledby="senai-login-titulo">
+  <div class="senai-login-card">
+    <div class="senai-login-header">
+      <div class="senai-login-logo">
+        <svg class="ico"><use href="#i-logo"/></svg>
+      </div>
+      <div>
+        <h2 id="senai-login-titulo">SENAI Smart Class</h2>
+        <p class="senai-login-sub">Monitoramento Inteligente &amp; Automação</p>
+      </div>
+    </div>
+
+    <form id="senai-login-form" novalidate>
+      <div class="senai-campo">
+        <label for="senai-email">E-mail de acesso</label>
+        <div class="senai-input-wrap">
+          <svg class="ico senai-input-ico"><use href="#i-mail"/></svg>
+          <input id="senai-email" type="email" placeholder="usuario@senai.br" autocomplete="username" required>
+        </div>
+      </div>
+
+      <div class="senai-campo">
+        <label for="senai-password">Senha</label>
+        <div class="senai-input-wrap">
+          <svg class="ico senai-input-ico"><use href="#i-lock"/></svg>
+          <input id="senai-password" type="password" placeholder="Digite sua senha" autocomplete="current-password" required>
+          <button type="button" id="btn-toggle-senha" class="btn-toggle-senha" title="Mostrar/ocultar senha" aria-label="Mostrar ou ocultar senha">
+            <svg class="ico"><use href="#i-eye"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" id="senai-btn-entrar" class="senai-btn-entrar">
+        <span class="btn-texto">Entrar no painel</span>
+        <span class="senai-spinner" aria-hidden="true" hidden></span>
+      </button>
+
+      <div id="senai-status" class="senai-status-aviso" role="alert" aria-live="assertive" hidden></div>
+    </form>
+
+    <div class="senai-login-footer">
+      <span class="senai-badge-seguro">
+        <svg class="ico"><use href="#i-check"/></svg> Acesso seguro com controle de perfil (ADM / Aluno)
+      </span>
+    </div>
+  </div>
+</div>
 
 <div class="layout">
 
@@ -58,6 +113,7 @@ try {
       <button class="aba-btn" id="aba-btn-controles" data-aba="controles" type="button" role="tab" aria-controls="aba-controles" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-power"/></svg>Controles</button>
       <button class="aba-btn" id="aba-btn-verificacao" data-aba="verificacao" type="button" role="tab" aria-controls="aba-verificacao" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-users"/></svg>Verificação</button>
       <button class="aba-btn" id="aba-btn-config" data-aba="config" type="button" role="tab" aria-controls="aba-config" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-ajustes"/></svg>Configurações</button>
+      <button class="aba-btn" id="aba-btn-conta" data-aba="conta" type="button" role="tab" aria-controls="aba-conta" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-user"/></svg><span class="conta-rotulo">Conta</span></button>
     </nav>
 
     <button class="btn tema-btn" id="btn-tema" type="button">
@@ -284,6 +340,39 @@ try {
         <label for="intervalo">Intervalo (segundos): <b id="intervalo-valor">5</b></label>
         <input type="range" id="intervalo" min="2" max="30" value="5" disabled>
       </div>
+    </section>
+
+    <!-- ABA CONTA -->
+    <section class="aba" id="aba-conta" role="tabpanel" aria-labelledby="aba-btn-conta" hidden>
+      <div class="conta-cabecalho">
+        <span class="conta-avatar"><svg class="ico"><use href="#i-user"/></svg></span>
+        <div>
+          <span class="conta-sobrelinha" id="conta-tipo">Conta</span>
+          <h2 id="conta-nome">Carregando perfil...</h2>
+          <p id="conta-resumo">Informações da conta conectada</p>
+        </div>
+      </div>
+
+      <div class="card conta-detalhes">
+        <div class="conta-item">
+          <span>Função</span>
+          <strong id="conta-funcao">--</strong>
+        </div>
+        <div class="conta-item">
+          <span>E-mail de acesso</span>
+          <strong id="conta-email">--</strong>
+        </div>
+        <div class="conta-item">
+          <span>Tipo de conta</span>
+          <strong id="conta-permissao">--</strong>
+        </div>
+        <div class="conta-item">
+          <span>Status</span>
+          <strong class="conta-status" id="conta-status">--</strong>
+        </div>
+      </div>
+
+      <button class="btn primario" id="btn-sair" type="button">Sair da conta</button>
     </section>
 
   </main>
