@@ -93,7 +93,7 @@ try {
 
     <div class="senai-login-footer">
       <span class="senai-badge-seguro">
-        <svg class="ico"><use href="#i-check"/></svg> Acesso seguro com controle de perfil (ADM / Aluno)
+        <svg class="ico"><use href="#i-check"/></svg> Acesso seguro com controle de perfil (ADM / Aluno / Professor)
       </span>
     </div>
   </div>
@@ -372,6 +372,40 @@ try {
         </div>
       </div>
 
+      <div class="conta-item" id="conta-serie-item" hidden>
+        <span>Série</span><strong id="conta-serie">--</strong>
+      </div>
+
+      <section id="gestao-contas" class="card gestao-contas" aria-labelledby="gestao-titulo" hidden>
+        <h3 id="gestao-titulo">Gerenciar contas</h3>
+        <p class="legenda">Crie acessos para sua escola. Apenas administradores podem cadastrar contas.</p>
+        <form id="criar-conta-form" class="conta-form">
+          <div class="conta-campo"><label for="novo-nome">Nome do usuário</label>
+            <input id="novo-nome" name="full_name" autocomplete="off" maxlength="120" required></div>
+          <div class="conta-campo"><label for="novo-email">E-mail de acesso</label>
+            <input id="novo-email" name="email" type="email" autocomplete="off" maxlength="254" required></div>
+          <div class="conta-campo"><label for="novo-perfil">Perfil da conta</label>
+            <select id="novo-perfil" name="role" required>
+              <option value="ALUNO">Aluno</option><option value="PROFESSOR">Professor</option><option value="ADM">Administrador (ADM)</option>
+            </select></div>
+          <div class="conta-campo" id="nova-serie-campo"><label for="nova-serie">Série do aluno</label>
+            <input id="nova-serie" name="serie" placeholder="Ex.: 2º ano — Desenvolvimento de Sistemas" maxlength="60" required></div>
+          <div class="conta-campo"><label for="nova-senha">Senha inicial</label>
+            <input id="nova-senha" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="nova-senha-ajuda" required>
+            <small id="nova-senha-ajuda">De 8 a 128 caracteres. O acesso será pelo e-mail e a senha informados.</small></div>
+          <p id="novo-perfil-ajuda" class="legenda conta-form-largura">Alunos acompanham o painel e precisam informar a série.</p>
+          <div class="conta-form-largura"><button class="btn primario" id="btn-criar-conta" type="submit">Criar conta</button></div>
+        </form>
+        <p id="criar-conta-status" role="status" aria-live="polite" hidden></p>
+        <div class="contas-lista-cabecalho"><h3>Contas cadastradas</h3>
+          <button class="btn" id="btn-atualizar-contas" type="button">Atualizar lista</button></div>
+        <p id="contas-lista-status" role="status" aria-live="polite"></p>
+        <div class="contas-tabela-container"><table class="contas-tabela">
+          <caption class="sr-only">Usuários cadastrados no Smart Class</caption>
+          <thead><tr><th scope="col">Nome</th><th scope="col">Perfil</th><th scope="col">Série</th><th scope="col">Status</th></tr></thead>
+          <tbody id="contas-lista"></tbody>
+        </table></div>
+      </section>
       <button class="btn primario" id="btn-sair" type="button">Sair da conta</button>
     </section>
 
