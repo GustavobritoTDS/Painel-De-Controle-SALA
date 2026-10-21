@@ -1,9 +1,14 @@
 # Contas do Smart Class
 
-Entre com uma conta ADM e abra **Conta ADM → Gerenciar contas**.
+Entre com uma conta ADM e abra **ícone de perfil → Gerenciamento de contas**.
 Preencha nome do usuário, e-mail, perfil e senha inicial. A série aparece
 e é obrigatória apenas para alunos. O login continua usando e-mail e senha;
 o nome identifica o usuário no painel.
+
+A lista abaixo do formulário permite filtrar Alunos, Professores e ADMs e
+buscar pelo nome ou e-mail. Use **Editar usuário** para corrigir os campos.
+Na edição, a nova senha é opcional: deixe em branco para manter a atual.
+Não é possível rebaixar o último ADM ativo.
 
 - **ADM:** acesso administrativo, inclusive criação de contas.
 - **Aluno:** acompanhamento do painel, com série no perfil.
@@ -23,7 +28,9 @@ cria a linha em `profiles` na mesma transação da conta Auth. O campo
 `user_metadata.role` nunca autoriza acesso administrativo.
 
 O código da função está em `supabase/functions/senai-admin/index.ts`.
-O ajuste do trigger está em `supabase/account-profiles.sql`, aplicado
+O trigger de criação está em `supabase/account-profiles.sql`. O trigger
+de edição em `supabase/sync-account-profiles.sql` sincroniza o perfil
+na mesma transação de atualização Auth. Esses ajustes foram aplicados
 ao projeto existente sem modificar seus usuários.
 
 ## Atualizar a cópia local
