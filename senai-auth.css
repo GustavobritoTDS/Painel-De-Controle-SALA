@@ -333,3 +333,25 @@ body[data-senai-role="PROFESSOR"] #aba-btn-config {
   .conta-form { grid-template-columns: 1fr; }
   .contas-lista-cabecalho { align-items: flex-start; flex-direction: column; }
 }
+
+/* A área de perfil tem seu próprio conteúdo, sem os indicadores da sala. */
+body[data-aba-ativa="conta"] .banner,
+body[data-aba-ativa="conta"] .metricas,
+body[data-aba-ativa="conta"] #btn-atualizar,
+body[data-aba-ativa="conta"] #alertas,
+body[data-aba-ativa="conta"] #btn-toggle-voz,
+body[data-aba-ativa="conta"] #voz-widget { display: none !important; }
+.sidebar-acoes { display: flex; align-items: center; gap: 10px; margin-top: auto; }
+.sidebar-acoes .tema-btn { margin: 0; flex: 1; }
+.sidebar-acoes .perfil-icone { width: 44px; height: 44px; padding: 10px; display: grid; place-items: center; border-radius: 12px; }
+.conta-subnav { display: flex; gap: 8px; flex-wrap: wrap; border-bottom: 1px solid var(--borda); padding-bottom: 16px; margin-bottom: 24px; }
+.conta-subnav[hidden], #btn-cancelar-edicao[hidden], #conta-perfil-painel[hidden] { display: none; }
+.conta-subaba { background: transparent; color: var(--suave); border: 1px solid var(--borda); border-radius: var(--raio-sm); padding: 12px 18px; font: inherit; cursor: pointer; }
+.conta-subaba.ativa { color: var(--texto-forte); background: var(--chip); border-color: var(--ciano); }
+.conta-subaba:focus-visible, .perfil-icone:focus-visible { outline: 2px solid var(--borda-foco); outline-offset: 3px; }
+.contas-filtros { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(200px, 2fr); gap: 16px; margin-top: 20px; }
+.contas-tabela .editar-usuario { white-space: nowrap; }
+.conta-cabecalho h2 { margin-bottom: 8px; }
+.gestao-contas h4 { margin-top: 24px; color: var(--texto-forte); }
+@media (max-width: 900px) { .sidebar-acoes { margin-top: 0; margin-left: auto; } }
+@media (max-width: 600px) { .contas-filtros { grid-template-columns: 1fr; } .conta-subaba { padding: 10px 12px; } }
