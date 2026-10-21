@@ -113,14 +113,16 @@ try {
       <button class="aba-btn" id="aba-btn-controles" data-aba="controles" type="button" role="tab" aria-controls="aba-controles" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-power"/></svg>Controles</button>
       <button class="aba-btn" id="aba-btn-verificacao" data-aba="verificacao" type="button" role="tab" aria-controls="aba-verificacao" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-users"/></svg>Verificação</button>
       <button class="aba-btn" id="aba-btn-config" data-aba="config" type="button" role="tab" aria-controls="aba-config" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-ajustes"/></svg>Configurações</button>
-      <button class="aba-btn" id="aba-btn-conta" data-aba="conta" type="button" role="tab" aria-controls="aba-conta" aria-selected="false" tabindex="-1"><svg class="ico"><use href="#i-user"/></svg><span class="conta-rotulo">Conta</span></button>
     </nav>
 
+    <div class="sidebar-acoes">
     <button class="btn tema-btn" id="btn-tema" type="button">
       <svg class="ico ico-sol"><use href="#i-sol"/></svg>
       <svg class="ico ico-lua"><use href="#i-lua"/></svg>
       <span id="tema-texto">Modo claro</span>
     </button>
+    <div role="tablist" aria-label="Perfil"><button class="aba-btn perfil-icone" id="aba-btn-conta" data-aba="conta" type="button" role="tab" aria-label="Abrir perfil" title="Perfil" aria-controls="aba-conta" aria-selected="false"><svg class="ico" aria-hidden="true"><use href="#i-user"/></svg></button></div>
+    </div>
   </aside>
 
   <main class="conteudo">
@@ -346,38 +348,18 @@ try {
     <section class="aba" id="aba-conta" role="tabpanel" aria-labelledby="aba-btn-conta" hidden>
       <div class="conta-cabecalho">
         <span class="conta-avatar"><svg class="ico"><use href="#i-user"/></svg></span>
-        <div>
-          <span class="conta-sobrelinha" id="conta-tipo">Conta</span>
-          <h2 id="conta-nome">Carregando perfil...</h2>
-          <p id="conta-resumo">Informações da conta conectada</p>
-        </div>
+        <div><h2 id="conta-nome">Carregando perfil...</h2><span class="conta-sobrelinha" id="conta-tipo">Perfil</span></div>
       </div>
-
-      <div class="card conta-detalhes">
-        <div class="conta-item">
-          <span>Função</span>
-          <strong id="conta-funcao">--</strong>
-        </div>
-        <div class="conta-item">
-          <span>E-mail de acesso</span>
-          <strong id="conta-email">--</strong>
-        </div>
-        <div class="conta-item">
-          <span>Tipo de conta</span>
-          <strong id="conta-permissao">--</strong>
-        </div>
-        <div class="conta-item">
-          <span>Status</span>
-          <strong class="conta-status" id="conta-status">--</strong>
-        </div>
+      <div id="conta-subnav" class="conta-subnav" role="tablist" aria-label="Área de perfil" hidden>
+        <button id="conta-tab-perfil" class="conta-subaba ativa" type="button" role="tab" aria-controls="conta-perfil-painel" aria-selected="true">Meu perfil</button>
+        <button id="conta-tab-gestao" class="conta-subaba" type="button" role="tab" aria-controls="gestao-contas" aria-selected="false" tabindex="-1">Gerenciamento de contas</button>
       </div>
-
-      <div class="conta-item" id="conta-serie-item" hidden>
-        <span>Série</span><strong id="conta-serie">--</strong>
+      <div id="conta-perfil-painel" role="tabpanel" aria-labelledby="conta-tab-perfil">
+        <button class="btn primario" id="btn-sair" type="button">Sair da conta</button>
       </div>
-
-      <section id="gestao-contas" class="card gestao-contas" aria-labelledby="gestao-titulo" hidden>
-        <h3 id="gestao-titulo">Gerenciar contas</h3>
+      <section id="gestao-contas" class="card gestao-contas" role="tabpanel" aria-labelledby="conta-tab-gestao" hidden>
+        <h3 id="gestao-titulo">Gerenciamento de contas</h3>
+        <h4 id="formulario-conta-titulo">Criar conta</h4>
         <p class="legenda">Crie acessos para sua escola. Apenas administradores podem cadastrar contas.</p>
         <form id="criar-conta-form" class="conta-form">
           <div class="conta-campo"><label for="novo-nome">Nome do usuário</label>
@@ -390,23 +372,26 @@ try {
             </select></div>
           <div class="conta-campo" id="nova-serie-campo"><label for="nova-serie">Série do aluno</label>
             <input id="nova-serie" name="serie" placeholder="Ex.: 2º ano — Desenvolvimento de Sistemas" maxlength="60" required></div>
-          <div class="conta-campo"><label for="nova-senha">Senha inicial</label>
+          <div class="conta-campo"><label for="nova-senha" id="nova-senha-rotulo">Senha inicial</label>
             <input id="nova-senha" name="password" type="password" autocomplete="new-password" minlength="8" maxlength="128" aria-describedby="nova-senha-ajuda" required>
             <small id="nova-senha-ajuda">De 8 a 128 caracteres. O acesso será pelo e-mail e a senha informados.</small></div>
           <p id="novo-perfil-ajuda" class="legenda conta-form-largura">Alunos acompanham o painel e precisam informar a série.</p>
-          <div class="conta-form-largura"><button class="btn primario" id="btn-criar-conta" type="submit">Criar conta</button></div>
+          <div class="conta-form-largura"><button class="btn primario" id="btn-criar-conta" type="submit">Criar conta</button> <button class="btn" id="btn-cancelar-edicao" type="button" hidden>Cancelar edição</button></div>
         </form>
         <p id="criar-conta-status" role="status" aria-live="polite" hidden></p>
         <div class="contas-lista-cabecalho"><h3>Contas cadastradas</h3>
           <button class="btn" id="btn-atualizar-contas" type="button">Atualizar lista</button></div>
+        <div class="contas-filtros">
+          <div class="conta-campo"><label for="filtro-perfil">Filtrar por perfil</label><select id="filtro-perfil"><option value="TODOS">Todos</option><option value="ALUNO">Alunos</option><option value="PROFESSOR">Professores</option><option value="ADM">Administradores</option></select></div>
+          <div class="conta-campo"><label for="buscar-conta">Buscar usuário</label><input id="buscar-conta" type="search" placeholder="Nome ou e-mail"></div>
+        </div>
         <p id="contas-lista-status" role="status" aria-live="polite"></p>
         <div class="contas-tabela-container"><table class="contas-tabela">
           <caption class="sr-only">Usuários cadastrados no Smart Class</caption>
-          <thead><tr><th scope="col">Nome</th><th scope="col">Perfil</th><th scope="col">Série</th><th scope="col">Status</th></tr></thead>
+          <thead><tr><th scope="col">Nome</th><th scope="col">E-mail</th><th scope="col">Perfil</th><th scope="col">Série</th><th scope="col">Status</th><th scope="col">Ações</th></tr></thead>
           <tbody id="contas-lista"></tbody>
         </table></div>
       </section>
-      <button class="btn primario" id="btn-sair" type="button">Sair da conta</button>
     </section>
 
   </main>
