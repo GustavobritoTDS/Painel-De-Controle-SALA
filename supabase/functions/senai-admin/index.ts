@@ -94,7 +94,9 @@ Deno.serve(async(req)=>{
    const serie=body.role==="ALUNO"&&typeof body.serie==="string"?body.serie.trim():null;
    if(body.role==="ALUNO"&&(!serie||serie.length>60))return out(400,{error:"Informe a série do aluno"});
    if(body.role!=="ADM")await lastAdminCheck(p);
-   const {error}=await db.from("profiles").update({role:body.role,serie,updated_at:new Date().toISOString()}).eq("id",id);
+   const {data:existing,error:readError}=await db.auth.admin.getUserById(id);
+   if(readError||!existing.user)return out(404,{error:"Usuário não encontrado"});
+   const {error}=await db.auth.admin.updateUserById(id,{app_metadata:{...existing.user.app_metadata,role:body.role},user_metadata:{...existing.user.user_metadata,serie}});
    if(error)throw error;
    await log(actor,"ROLE",id,{role:body.role});
    return out(200,{ok:true});
