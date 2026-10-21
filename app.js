@@ -1165,11 +1165,13 @@ function desenhar() {
 }
 
 function mostrarAba(nome) {
+  document.body.dataset.abaAtiva = nome;
+  if (nome === "conta" && controleVoz && (controleVoz.ativo || controleVoz.iniciando)) controleVoz.parar();
   document.querySelectorAll(".aba-btn").forEach((botao) => {
     const selecionada = botao.dataset.aba === nome;
     botao.classList.toggle("ativa", selecionada);
     botao.setAttribute("aria-selected", String(selecionada));
-    botao.tabIndex = selecionada ? 0 : -1;
+    botao.tabIndex = selecionada || botao.id === "aba-btn-conta" ? 0 : -1;
   });
 
   document.querySelectorAll(".aba").forEach((secao) => {
