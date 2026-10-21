@@ -34,7 +34,15 @@ Deno.serve(async(req)=>{
   if(body.action==="list"){
    const {data,error}=await db.from("profiles").select("id,full_name,role,serie,status,created_at").order("created_at",{ascending:false}).limit(500);
    if(error)throw error;
-   return out(200,{users:data});
+   const remaining=new Set((data??[]).map((u)=>u.id));
+   const emails=new Map<string,string>();
+   for(let page=1;remaining.size;page++){
+    const {data:batch,error:authListError}=await db.auth.admin.listUsers({page,perPage:1000});
+    if(authListError)throw Error("Não foi possível carregar os e-mails das contas");
+    for(const u of batch.users){if(remaining.delete(u.id))emails.set(u.id,u.email??"");}
+    if(batch.users.length<1000)break;
+   }
+   return out(200,{users:(data??[]).map(u=>({...u,email:emails.get(u.id)??""}))});
   }
   if(body.action==="create"){
    const full_name=typeof body.full_name==="string"?body.full_name.trim():"";
@@ -47,7 +55,7 @@ Deno.serve(async(req)=>{
    if(password.length<8||password.length>128)return out(400,{error:"A senha deve ter entre 8 e 128 caracteres"});
    if(!["ADM","ALUNO","PROFESSOR"].includes(role))return out(400,{error:"Perfil inválido"});
    if(role==="ALUNO"&&(!serie||serie.length>60))return out(400,{error:"Informe a série do aluno (até 60 caracteres)"});
-   const {data,error}=await db.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name,serie},app_metadata:{role}});
+   const {data,error}=await db.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name,display_name:full_name,serie},app_metadata:{role}});
    if(error)return out(400,{error:error.code==="email_exists"||error.code==="user_already_exists"?"Já existe uma conta com este e-mail":"Não foi possível criar a conta. Verifique o e-mail e os requisitos de senha."});
    if(!data.user)throw Error("O serviço não confirmou a criação da conta");
    // O trigger cria o perfil na mesma transação do usuário Auth.
@@ -58,6 +66,29 @@ Deno.serve(async(req)=>{
   if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(body.user_id??""))return out(400,{error:"ID inválido"});
   const id=body.user_id;
   const p=await target(id);
+  if(body.action==="update"){
+   const full_name=typeof body.full_name==="string"?body.full_name.trim():"";
+   const email=typeof body.email==="string"?body.email.trim().toLowerCase():"";
+   const password=typeof body.password==="string"?body.password:"";
+   const role=body.role;
+   const serie=role==="ALUNO"&&typeof body.serie==="string"?body.serie.trim():null;
+   if(!full_name||full_name.length>120)return out(400,{error:"Informe um nome de usuário de até 120 caracteres"});
+   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)||email.length>254)return out(400,{error:"Informe um e-mail válido"});
+   if(password&&(password.length<8||password.length>128))return out(400,{error:"A nova senha deve ter entre 8 e 128 caracteres"});
+   if(!["ADM","ALUNO","PROFESSOR"].includes(role))return out(400,{error:"Perfil inválido"});
+   if(role==="ALUNO"&&(!serie||serie.length>60))return out(400,{error:"Informe a série do aluno"});
+   if(role!=="ADM")await lastAdminCheck(p);
+   const {data:existing,error:readError}=await db.auth.admin.getUserById(id);
+   if(readError||!existing.user)return out(404,{error:"Usuário não encontrado"});
+   const changes:Record<string,unknown>={email,email_confirm:true,user_metadata:{...existing.user.user_metadata,full_name,display_name:full_name,serie},app_metadata:{...existing.user.app_metadata,role}};
+   if(password)changes.password=password;
+   // O trigger de sincronização mantém Auth e profiles na mesma transação.
+   const {error}=await db.auth.admin.updateUserById(id,changes);
+   if(error)return out(400,{error:error.code==="email_exists"||error.code==="user_already_exists"?"Já existe uma conta com este e-mail":"Não foi possível atualizar a conta. Verifique os dados e tente novamente."});
+   try{await log(actor,"UPDATE",id,{full_name,role,serie,password_changed:!!password});}
+   catch{console.error("Falha de auditoria de edição",id);}
+   return out(200,{ok:true});
+  }
   if(body.action==="set_role"){
    if(!["ADM","ALUNO","PROFESSOR"].includes(body.role))return out(400,{error:"Perfil inválido"});
    const serie=body.role==="ALUNO"&&typeof body.serie==="string"?body.serie.trim():null;
