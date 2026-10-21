@@ -187,8 +187,6 @@ window.senaiAuth = (() => {
     document.body.dataset.senaiRole = profile.role;
     const administrador = isAdmin();
     const professor = profile.role === "PROFESSOR";
-    const tituloConta = administrador ? "Conta de Administrador" : professor ? "Conta de Professor" : "Conta de Aluno";
-    const funcao = administrador ? "Administrador (ADM)" : professor ? "Professor (Leitura)" : "Aluno (Leitura)";
     const nome = profile.full_name || profile.email.split("@")[0];
 
     if (!administrador) {
@@ -211,94 +209,143 @@ window.senaiAuth = (() => {
       if (elemento) elemento.textContent = valor;
     };
 
-    preencher("#aba-btn-conta .conta-rotulo", administrador ? "Conta ADM" : "Conta");
-    preencher("#conta-tipo", tituloConta);
+    preencher("#conta-tipo", administrador ? "Administrador" : professor ? "Professor" : "Aluno");
     preencher("#conta-nome", nome);
-    preencher("#conta-resumo", administrador
-      ? "Acesso administrativo com permissão de persistência e controle"
-      : `Acesso de ${professor ? "professor" : "aluno"} com monitoramento em tempo real`);
-    preencher("#conta-funcao", funcao);
-    preencher("#conta-email", profile.email);
-    preencher("#conta-permissao", administrador ? "Acesso Total (ADM)" : `Observador (${professor ? "Professor" : "Aluno"})`);
-    preencher("#conta-status", profile.status === "ATIVO" ? "Conta ativa e verificada" : profile.status);
-    const serieItem = document.getElementById("conta-serie-item");
-    if (serieItem) serieItem.hidden = profile.role !== "ALUNO";
-    preencher("#conta-serie", profile.serie || "Não informada");
     configurarGestaoContas();
   }
 
   function configurarGestaoContas() {
-    const painel = document.getElementById("gestao-contas");
+    const $ = (id) => document.getElementById(id);
+    const painel = $("gestao-contas");
     if (!painel) return;
-    painel.hidden = !isAdmin();
-    if (!isAdmin() || painel.dataset.inicializado) return;
+    $("conta-subnav").hidden = !isAdmin();
+    const trocarSubaba = (gestao) => {
+      gestao = gestao && isAdmin();
+      painel.hidden = !gestao;
+      $("conta-perfil-painel").hidden = gestao;
+      for (const [id, ativo] of [["conta-tab-perfil", !gestao], ["conta-tab-gestao", gestao]]) {
+        $(id).classList.toggle("ativa", ativo);
+        $(id).setAttribute("aria-selected", String(ativo));
+        $(id).tabIndex = ativo ? 0 : -1;
+      }
+    };
+    if (!isAdmin()) { trocarSubaba(false); return; }
+    if (painel.dataset.inicializado) return;
     painel.dataset.inicializado = "true";
-    const form = document.getElementById("criar-conta-form");
-    const perfil = document.getElementById("novo-perfil");
-    const serie = document.getElementById("nova-serie");
-    const campoSerie = document.getElementById("nova-serie-campo");
-    const status = document.getElementById("criar-conta-status");
-    const atualizar = document.getElementById("btn-atualizar-contas");
-    const botao = document.getElementById("btn-criar-conta");
+    trocarSubaba(false);
+    const form = $("criar-conta-form"), perfil = $("novo-perfil"), serie = $("nova-serie");
+    const status = $("criar-conta-status"), atualizar = $("btn-atualizar-contas"), botao = $("btn-criar-conta");
+    let usuarios = [], editando = null, salvando = false;
     const ajustarSerie = () => {
       const aluno = perfil.value === "ALUNO";
-      campoSerie.hidden = !aluno;
+      $("nova-serie-campo").hidden = !aluno;
       serie.disabled = !aluno;
       serie.required = aluno;
       if (!aluno) serie.value = "";
-      document.getElementById("novo-perfil-ajuda").textContent = perfil.value === "ADM"
-        ? "Administradores têm acesso total ao painel e podem criar outras contas."
+      $("novo-perfil-ajuda").textContent = perfil.value === "ADM"
+        ? "Administradores têm acesso total ao painel e podem gerenciar contas."
         : aluno ? "Alunos acompanham o painel e precisam informar a série."
         : "Professores acompanham o painel. Não é necessário informar série.";
     };
+    const modoFormulario = (usuario = null) => {
+      editando = usuario;
+      form.reset();
+      $("formulario-conta-titulo").textContent = usuario ? "Editar usuário" : "Criar conta";
+      botao.textContent = usuario ? "Salvar alterações" : "Criar conta";
+      $("btn-cancelar-edicao").hidden = !usuario;
+      $("nova-senha").required = !usuario;
+      $("nova-senha-rotulo").textContent = usuario ? "Nova senha (opcional)" : "Senha inicial";
+      $("nova-senha-ajuda").textContent = usuario ? "Deixe em branco para manter a senha atual. A senha existente não é exibida." : "De 8 a 128 caracteres. O acesso será pelo e-mail e a senha informados.";
+      if (usuario) {
+        $("novo-nome").value = usuario.full_name || "";
+        $("novo-email").value = usuario.email || "";
+        perfil.value = usuario.role;
+      }
+      ajustarSerie();
+      if (usuario?.role === "ALUNO") serie.value = usuario.serie || "";
+    };
+    function renderizarContas() {
+      const filtro = $("filtro-perfil").value;
+      const busca = $("buscar-conta").value.trim().toLocaleLowerCase("pt-BR");
+      const filtrados = usuarios.filter(u => (filtro === "TODOS" || u.role === filtro) && `${u.full_name || ""} ${u.email || ""}`.toLocaleLowerCase("pt-BR").includes(busca));
+      const lista = $("contas-lista");
+      lista.replaceChildren();
+      for (const user of filtrados) {
+        const linha = document.createElement("tr");
+        const valores = [user.full_name || "Nome não informado", user.email || "—", user.role === "ADM" ? "Administrador" : user.role === "PROFESSOR" ? "Professor" : "Aluno", user.role === "ALUNO" ? user.serie || "Não informada" : "—", user.status === "ATIVO" ? "Ativo" : "Bloqueado"];
+        for (const valor of valores) {
+          const celula = document.createElement("td");
+          celula.textContent = valor;
+          linha.append(celula);
+        }
+        const acoes = document.createElement("td"), editar = document.createElement("button");
+        editar.type = "button";
+        editar.className = "btn editar-usuario";
+        editar.textContent = "Editar usuário";
+        editar.setAttribute("aria-label", `Editar usuário ${user.full_name || user.email || "sem nome"}`);
+        editar.disabled = salvando;
+        editar.addEventListener("click", () => {
+          if (salvando) return;
+          modoFormulario(user);
+          status.hidden = true;
+          form.scrollIntoView?.({ behavior: "smooth", block: "start" });
+          $("novo-nome").focus({ preventScroll: true });
+        });
+        acoes.append(editar); linha.append(acoes); lista.append(linha);
+      }
+      $("contas-lista-status").textContent = filtrados.length ? `${filtrados.length} de ${usuarios.length} conta(s).` : "Nenhuma conta encontrada para este filtro.";
+    }
     async function carregarContas() {
       atualizar.disabled = true;
-      const aviso = document.getElementById("contas-lista-status");
-      aviso.textContent = "Carregando contas...";
+      $("contas-lista-status").textContent = "Carregando contas...";
       try {
         const { users } = await manage("list");
-        const lista = document.getElementById("contas-lista");
-        lista.replaceChildren();
-        for (const user of users || []) {
-          const linha = document.createElement("tr");
-          const valores = [user.full_name || "Nome não informado", user.role === "ADM" ? "Administrador" : user.role === "PROFESSOR" ? "Professor" : "Aluno", user.role === "ALUNO" ? user.serie || "Não informada" : "—", user.status === "ATIVO" ? "Ativo" : "Bloqueado"];
-          for (const valor of valores) {
-            const celula = document.createElement("td");
-            celula.textContent = valor;
-            linha.append(celula);
-          }
-          lista.append(linha);
-        }
-        aviso.textContent = users?.length ? `${users.length} conta(s) cadastrada(s).` : "Nenhuma conta cadastrada.";
-      } catch (error) { aviso.textContent = error.message; }
+        usuarios = users || [];
+        renderizarContas();
+      } catch (error) { $("contas-lista-status").textContent = error.message; }
       finally { atualizar.disabled = false; }
     }
+    for (const [id, gestao] of [["conta-tab-perfil", false], ["conta-tab-gestao", true]]) {
+      $(id).addEventListener("click", () => trocarSubaba(gestao));
+      $(id).addEventListener("keydown", (event) => {
+        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+        event.preventDefault();
+        const proxima = event.key === "Home" ? false : event.key === "End" ? true : !gestao;
+        trocarSubaba(proxima);
+        $(proxima ? "conta-tab-gestao" : "conta-tab-perfil").focus();
+      });
+    }
+    $("btn-cancelar-edicao").addEventListener("click", () => { if (!salvando) { modoFormulario(); status.hidden = true; } });
+    $("filtro-perfil").addEventListener("change", renderizarContas);
+    $("buscar-conta").addEventListener("input", renderizarContas);
     perfil.addEventListener("change", ajustarSerie);
     atualizar.addEventListener("click", carregarContas);
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (botao.disabled || !form.reportValidity()) return;
-      const nome = document.getElementById("novo-nome").value.trim();
-      const senha = document.getElementById("nova-senha");
-      botao.disabled = true;
-      botao.textContent = "Criando conta...";
-      status.hidden = false;
-      status.textContent = "Salvando o novo acesso...";
-      status.dataset.tipo = "info";
+      if (salvando || !form.reportValidity()) return;
+      const nome = $("novo-nome").value.trim(), senha = $("nova-senha");
+      const idEditado = editando?.id;
+      const payload = { full_name: nome, email: $("novo-email").value.trim(), role: perfil.value, serie: perfil.value === "ALUNO" ? serie.value.trim() : null };
+      if (senha.value) payload.password = senha.value;
+      if (idEditado) payload.user_id = idEditado;
+      salvando = true; botao.disabled = true;
+      $("btn-cancelar-edicao").disabled = true;
+      renderizarContas();
+      botao.textContent = "Salvando...";
+      status.hidden = false; status.textContent = "Salvando os dados da conta..."; status.dataset.tipo = "info";
       try {
-        await manage("create", { full_name: nome, email: document.getElementById("novo-email").value.trim(), password: senha.value, role: perfil.value, serie: perfil.value === "ALUNO" ? serie.value.trim() : null });
-        status.textContent = `Conta de ${nome} criada. O usuário já pode entrar com o e-mail e a senha cadastrados.`;
+        await manage(idEditado ? "update" : "create", payload);
+        status.textContent = idEditado ? `Dados de ${nome} atualizados.` : `Conta de ${nome} criada. O usuário já pode entrar com o e-mail e a senha cadastrados.`;
         status.dataset.tipo = "sucesso";
-        form.reset();
-        ajustarSerie();
-        await carregarContas();
-      } catch (error) {
-        status.textContent = error.message;
-        status.dataset.tipo = "erro";
-      } finally {
-        senha.value = "";
-        botao.disabled = false;
-        botao.textContent = "Criar conta";
+        modoFormulario();
+        if (idEditado === profile.id) { profile = await getProfile(); applyRole(); }
+        if (isAdmin()) await carregarContas();
+      } catch (error) { status.textContent = error.message; status.dataset.tipo = "erro"; }
+      finally {
+        senha.value = ""; salvando = false; botao.disabled = false;
+        $("btn-cancelar-edicao").disabled = false;
+        botao.textContent = editando ? "Salvar alterações" : "Criar conta";
+        renderizarContas();
       }
     });
     ajustarSerie();
