@@ -277,7 +277,9 @@
 
 /* Restrições por perfil */
 body[data-senai-role="ALUNO"] #aba-config,
-body[data-senai-role="ALUNO"] #aba-btn-config {
+body[data-senai-role="ALUNO"] #aba-btn-config,
+body[data-senai-role="PROFESSOR"] #aba-config,
+body[data-senai-role="PROFESSOR"] #aba-btn-config {
   display: none !important;
 }
 
@@ -298,4 +300,36 @@ body[data-senai-role="ALUNO"] #aba-btn-config {
   background: #dc2626;
   border-color: #dc2626;
   color: #ffffff;
+}
+
+.gestao-contas { margin-top: 28px; padding: 24px; }
+.gestao-contas[hidden], .conta-campo[hidden], #conta-serie-item[hidden] { display: none; }
+.gestao-contas h3 { margin: 0 0 12px; color: var(--texto-forte); }
+.conta-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 24px 0; }
+.conta-campo { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.conta-campo label { font-size: .9rem; font-weight: 600; color: var(--texto); }
+.conta-campo input, .conta-campo select {
+  width: 100%; box-sizing: border-box; min-height: 44px; padding: 11px 12px;
+  border: 1px solid var(--borda); border-radius: var(--raio-sm);
+  background: var(--fundo); color: var(--texto); font: inherit;
+}
+.conta-campo input:focus, .conta-campo select:focus { outline: 2px solid var(--borda-foco); outline-offset: 2px; }
+.conta-campo small { color: var(--suave); line-height: 1.5; }
+.conta-form-largura { grid-column: 1 / -1; }
+#criar-conta-status { padding: 14px; border: 1px solid var(--borda); border-radius: var(--raio-sm); line-height: 1.5; }
+#criar-conta-status[data-tipo="erro"] { color: var(--ruim); }
+#criar-conta-status[data-tipo="sucesso"] { color: var(--bom); }
+.contas-lista-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 28px; }
+.contas-lista-cabecalho h3 { margin: 0; }
+#contas-lista-status { color: var(--suave); font-size: .9rem; }
+.contas-tabela-container { overflow-x: auto; }
+.contas-tabela { border-collapse: collapse; width: 100%; text-align: left; }
+.contas-tabela th, .contas-tabela td { padding: 14px 12px; border-bottom: 1px solid var(--borda); overflow-wrap: anywhere; }
+.contas-tabela th { color: var(--suave); font-size: .85rem; }
+.contas-tabela td { color: var(--texto); }
+.contas-tabela caption { text-align: left; color: var(--suave); padding: 12px; }
+@media (max-width: 600px) {
+  .gestao-contas { padding: 16px; }
+  .conta-form { grid-template-columns: 1fr; }
+  .contas-lista-cabecalho { align-items: flex-start; flex-direction: column; }
 }
