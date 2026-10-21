@@ -18,7 +18,7 @@ async function setup(t, role = 'ADM', options = {}) {
     from: () => ({ select() { return this; }, eq() { return this; }, order() { return this; }, single: async () => ({ data: profile }), limit: async () => ({ data: [] }) }),
     functions: { invoke: async (_name, { body }) => {
       calls.push(body);
-      if (body.action === 'list') return { data: { users: [{ ...profile, full_name: '<img src=x onerror=alert(1)>' }] } };
+      if (body.action === 'list') return { data: { users: [{ ...profile, full_name: '<img src=x onerror=alert(1)>', email: 'teste@example.com' }] } };
       if (options.createError) return { error: { context: { json: async () => ({ error: options.createError }) } } };
       return { data: { ok: true } };
     } }
@@ -32,6 +32,7 @@ async function setup(t, role = 'ADM', options = {}) {
   $('senai-login-form').dispatchEvent(new window.Event('submit', { cancelable: true }));
   const settle = () => new Promise((resolve) => setImmediate(resolve));
   await settle();
+  if (role === "ADM" && !options.missingProfile) $("conta-tab-gestao").click();
   return { window, $, calls, settle };
 }
 test('formulário exclusivo do ADM e lista trata nomes como texto', async (t) => {
@@ -47,7 +48,7 @@ for (const role of ['ALUNO', 'PROFESSOR']) {
     assert.equal($('gestao-contas').hidden, true);
     assert.equal($('aba-btn-config').hidden, true);
     assert.match($('conta-tipo').textContent, role === 'ALUNO' ? /Aluno/ : /Professor/);
-    assert.equal($('conta-serie-item').hidden, role !== 'ALUNO');
+    assert.equal($('conta-subnav').hidden, true);
     assert.equal(calls.length, 0);
   });
 }
@@ -101,4 +102,73 @@ test('perfil ausente não aceita user_metadata ADM como autorização', async (t
   assert.equal($('gestao-contas').hidden, true);
   assert.match($('senai-status').textContent, /validar seu perfil/);
   assert.equal(calls.length, 0);
+});
+
+test('ícone de perfil fica ao lado do tema e a subaba alterna painéis', async (t) => {
+  const { $, window } = await setup(t);
+  assert.equal($('aba-btn-conta').parentElement.parentElement, $('btn-tema').parentElement);
+  assert.equal($('aba-btn-conta').textContent.trim(), '');
+  $('conta-tab-perfil').click();
+  assert.equal($('gestao-contas').hidden, true);
+  assert.equal($('conta-perfil-painel').hidden, false);
+  $('conta-tab-perfil').dispatchEvent(new window.KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }));
+  assert.equal($('gestao-contas').hidden, false);
+  assert.equal($('conta-tab-gestao').getAttribute('aria-selected'), 'true');
+});
+test('filtra contas por perfil e busca pelo e-mail', async (t) => {
+  const { $, window } = await setup(t);
+  $('filtro-perfil').value = 'ALUNO';
+  $('filtro-perfil').dispatchEvent(new window.Event('change'));
+  assert.equal($('contas-lista').children.length, 0);
+  $('filtro-perfil').value = 'ADM';
+  $('filtro-perfil').dispatchEvent(new window.Event('change'));
+  assert.equal($('contas-lista').children.length, 1);
+  $('buscar-conta').value = 'inexistente';
+  $('buscar-conta').dispatchEvent(new window.Event('input'));
+  assert.equal($('contas-lista').children.length, 0);
+  $('buscar-conta').value = 'teste@example.com';
+  $('buscar-conta').dispatchEvent(new window.Event('input'));
+  assert.equal($('contas-lista').children.length, 1);
+});
+test('edita conta sem exigir nem enviar a senha atual', async (t) => {
+  const { $, window, calls, settle } = await setup(t);
+  // Um ID diferente do conectado evita atualizar o perfil do administrador.
+  $('contas-lista').querySelector('button').click();
+  assert.equal($('novo-email').value, 'teste@example.com');
+  assert.equal($('nova-senha').required, false);
+  assert.equal($('nova-senha').value, '');
+  $('novo-nome').value = 'Nome corrigido';
+  $('novo-perfil').value = 'ALUNO';
+  $('novo-perfil').dispatchEvent(new window.Event('change'));
+  $('nova-serie').value = '2º ano';
+  $('criar-conta-form').dispatchEvent(new window.Event('submit', { cancelable: true }));
+  await settle();
+  const request = calls.find(c => c.action === 'update');
+  assert.equal(request.full_name, 'Nome corrigido');
+  assert.equal(request.role, 'ALUNO');
+  assert.equal(request.serie, '2º ano');
+  assert.ok(!('password' in request));
+});
+test('cancelar edição volta à criação e limpa os campos', async (t) => {
+  const { $ } = await setup(t);
+  $('contas-lista').querySelector('button').click();
+  $('btn-cancelar-edicao').click();
+  assert.equal($('novo-nome').value, '');
+  assert.equal($('nova-senha').required, true);
+  assert.equal($('btn-cancelar-edicao').hidden, true);
+  assert.equal($('btn-criar-conta').textContent, 'Criar conta');
+});
+test('aba de perfil retira painel da sala e restaura ao sair', async (t) => {
+  const { window } = await setup(t);
+  const app = readFileSync(new URL('../app.js', import.meta.url), 'utf8');
+  const start = app.indexOf('function mostrarAba(nome) {');
+  const end = app.indexOf('// ==========================================', start);
+  window.controleVoz = null; window.agendarRedesenhoGraficos = () => {};
+  window.eval(app.slice(start, end));
+  window.mostrarAba('conta');
+  assert.equal(window.document.body.dataset.abaAtiva, 'conta');
+  assert.equal(window.document.getElementById('aba-conta').hidden, false);
+  window.mostrarAba('sensores');
+  assert.equal(window.document.body.dataset.abaAtiva, 'sensores');
+  assert.equal(window.document.getElementById('aba-conta').hidden, true);
 });
