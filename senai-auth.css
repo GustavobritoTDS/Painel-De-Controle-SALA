@@ -1,0 +1,301 @@
+/* ==========================================================
+   SENAI Smart Class - Estilos da Autenticação & Tela de Login
+   ========================================================== */
+
+#senai-login {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: radial-gradient(circle at top center, #111d38 0%, #060b17 70%, #03060d 100%);
+  color: #f8fafc;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#senai-login[hidden] {
+  display: none !important;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+#senai-login.fechando {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+.senai-login-card {
+  width: min(100%, 420px);
+  padding: 36px 32px;
+  border-radius: 20px;
+  background: rgba(17, 29, 54, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  animation: senaiCardEntrada 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes senaiCardEntrada {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.senai-login-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.senai-login-logo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.35);
+  flex-shrink: 0;
+}
+
+.senai-login-logo .ico {
+  width: 26px;
+  height: 26px;
+}
+
+.senai-login-header h2 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.senai-login-sub {
+  margin: 3px 0 0;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  line-height: 1.3;
+}
+
+.senai-campo {
+  margin-bottom: 18px;
+}
+
+.senai-campo label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+
+.senai-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.senai-input-ico {
+  position: absolute;
+  left: 14px;
+  width: 18px;
+  height: 18px;
+  color: #64748b;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.senai-input-wrap input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  background: #091224;
+  border: 1px solid #243552;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+  font-family: inherit;
+}
+
+.senai-input-wrap input:focus {
+  border-color: #3b82f6;
+  background: #0d1a33;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+}
+
+.senai-input-wrap input:focus ~ .senai-input-ico {
+  color: #3b82f6;
+}
+
+.senai-input-wrap input::placeholder {
+  color: #475569;
+}
+
+.btn-toggle-senha {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.btn-toggle-senha:hover {
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.btn-toggle-senha .ico {
+  width: 18px;
+  height: 18px;
+}
+
+.senai-btn-entrar {
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px 20px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s, opacity 0.2s;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+  font-family: inherit;
+}
+
+.senai-btn-entrar:hover:not(:disabled) {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+}
+
+.senai-btn-entrar:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.senai-btn-entrar:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.senai-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: senaiGirar 0.7s linear infinite;
+}
+
+@keyframes senaiGirar {
+  to { transform: rotate(360deg); }
+}
+
+.senai-status-aviso {
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  text-align: center;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  animation: senaiFadeIn 0.2s ease;
+}
+
+.senai-status-aviso[data-tipo="info"] {
+  background: rgba(59, 130, 246, 0.15);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+}
+
+.senai-status-aviso[data-tipo="sucesso"] {
+  background: rgba(34, 197, 94, 0.15);
+  border-color: rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+
+@keyframes senaiFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.senai-login-footer {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  text-align: center;
+}
+
+.senai-badge-seguro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: #64748b;
+}
+
+.senai-badge-seguro .ico {
+  width: 14px;
+  height: 14px;
+  color: #22c55e;
+}
+
+/* Restrições por perfil */
+body[data-senai-role="ALUNO"] #aba-config,
+body[data-senai-role="ALUNO"] #aba-btn-config {
+  display: none !important;
+}
+
+/* Botão sair da conta */
+#btn-sair {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+#btn-sair:hover {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
