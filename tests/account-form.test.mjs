@@ -46,12 +46,20 @@ for (const role of ['ALUNO', 'PROFESSOR']) {
   test(`${role} vê seu perfil e não acessa gestão`, async (t) => {
     const { $, calls } = await setup(t, role);
     assert.equal($('gestao-contas').hidden, true);
-    assert.equal($('aba-btn-config').hidden, true);
+    assert.equal($('aba-btn-config').hidden, role === 'ALUNO');
     assert.match($('conta-tipo').textContent, role === 'ALUNO' ? /Aluno/ : /Professor/);
     assert.equal($('conta-subnav').hidden, true);
     assert.equal(calls.length, 0);
   });
 }
+test('professor opera o painel, mas não ganha gestão de contas', async (t) => {
+  const { $, window } = await setup(t, 'PROFESSOR');
+  for (const id of ['btn-baixar', 'btn-limpar', 'btn-toggle-voz', 'btn-voz', 'btn-desligar-tudo', 'modo-auto', 'temp-alta', 'lux-baixa', 'auto-refresh']) {
+    assert.equal($(id).disabled, false, `${id} deve estar disponível para professor`);
+  }
+  assert.equal(window.senaiAuth.canOperatePanel(), true);
+  assert.equal(window.senaiAuth.isAdmin(), false);
+});
 test('série só é visível e obrigatória para aluno', async (t) => {
   const { $, window } = await setup(t);
   assert.equal($('nova-serie').required, true);
@@ -100,7 +108,7 @@ test('erro do servidor aparece sem perder nome e e-mail', async (t) => {
 test('perfil ausente não aceita user_metadata ADM como autorização', async (t) => {
   const { $, calls } = await setup(t, 'ADM', { missingProfile: true });
   assert.equal($('gestao-contas').hidden, true);
-  assert.match($('senai-status').textContent, /validar seu perfil/);
+  assert.match($('senai-status').textContent, /perfil de acesso/);
   assert.equal(calls.length, 0);
 });
 

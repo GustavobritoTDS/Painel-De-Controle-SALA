@@ -6,7 +6,7 @@ import vm from 'node:vm';
 
 const source = readFileSync(new URL('../supabase/functions/senai-admin/index.ts', import.meta.url), 'utf8');
 function setup({ role = 'ADM', status = 'ATIVO', validToken = true, createError = null, targetRole = 'ALUNO', adminCount = 2, updateError = null } = {}) {
-  const created = [], audits = [], updated = [];
+  const created = [], audits = [], updated = [], profiles = [];
   let handler;
   const db = {
     auth: {
@@ -23,6 +23,7 @@ function setup({ role = 'ADM', status = 'ATIVO', validToken = true, createError 
     from(table) {
       if (table === 'admin_audit') return { insert: async (row) => { audits.push(row); return {}; } };
       return {
+        upsert: async (row) => { profiles.push(row); return {}; },
         selected: null,
         select() { return this; }, eq(_key, value) { this.selected = value; return this; },
         single() { return Promise.resolve({ data: { role: this.selected === 'actor' ? role : targetRole, status } }); },
@@ -31,19 +32,19 @@ function setup({ role = 'ADM', status = 'ATIVO', validToken = true, createError 
       };
     }
   };
-  vm.runInNewContext(stripTypeScriptTypes(source.replace(/^import .*;\n/, '')), {
+  vm.runInNewContext(stripTypeScriptTypes(source.replace(/^import .*;\r?\n/, '')), {
     Deno: { env: { get: () => 'server-only' }, serve: (fn) => { handler = fn; } },
     createClient: () => db, Response, console: { error() {} }
   });
   const send = (body, authorization = 'Bearer valid-token') => handler({
     method: 'POST', headers: new Headers(authorization ? { authorization } : {}), json: async () => body
   });
-  return { send, created, audits, updated };
+  return { send, created, audits, updated, profiles };
 }
 const account = { action: 'create', full_name: '  Maria Silva  ', email: '  MARIA@example.com ', password: 'senha-teste-123', role: 'ALUNO', serie: ' 2º ano ' };
 
 test('aluno recebe nome, e-mail normalizado, série e metadados confiáveis', async () => {
-  const { send, created, audits } = setup();
+  const { send, created, audits, profiles } = setup();
   const response = await send(account);
   assert.equal(response.status, 201);
   assert.deepEqual(JSON.parse(JSON.stringify(created[0])), {
@@ -51,6 +52,7 @@ test('aluno recebe nome, e-mail normalizado, série e metadados confiáveis', as
     user_metadata: { full_name: 'Maria Silva', display_name: 'Maria Silva', serie: '2º ano' }, app_metadata: { role: 'ALUNO' }
   });
   assert.equal(audits.length, 1);
+  assert.deepEqual(JSON.parse(JSON.stringify(profiles[0])), { id: 'new-user', full_name: 'Maria Silva', role: 'ALUNO', status: 'ATIVO', serie: '2º ano' });
   assert.ok(!JSON.stringify(audits).includes(account.password));
   assert.ok(!(await response.text()).includes(account.password));
 });

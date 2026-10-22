@@ -42,6 +42,8 @@ window.senaiAuth = (() => {
   let initialized = false;
 
   const isAdmin = () => profile?.role === "ADM" && profile?.status === "ATIVO";
+  // Professores operam o painel como ADM, mas não gerenciam usuários.
+  const canOperatePanel = () => ["ADM", "PROFESSOR"].includes(profile?.role) && profile?.status === "ATIVO";
 
   async function getProfile() {
     const client = await esperarSupabase();
@@ -51,6 +53,9 @@ window.senaiAuth = (() => {
     }
 
     let dadosPerfil = null;
+    let profileError = null;
+    // A autorização vem exclusivamente de public.profiles; metadata do
+    // navegador jamais é aceita como substituto de um perfil válido.
     try {
       const { data, error } = await client
         .from("profiles")
@@ -58,18 +63,20 @@ window.senaiAuth = (() => {
         .eq("id", user.id)
         .single();
 
-      if (!error && data) {
-        dadosPerfil = data;
-      }
+      dadosPerfil = data;
+      profileError = error;
     } catch (err) {
-      console.warn("Consulta à tabela 'profiles' não disponível ou restrita via RLS:", err);
+      profileError = err;
     }
 
     if (dadosPerfil && dadosPerfil.status && dadosPerfil.status !== "ATIVO") {
       throw new Error("Sua conta de acesso está inativa ou bloqueada.");
     }
 
-    if (!dadosPerfil) throw new Error("Não foi possível validar seu perfil. Tente entrar novamente.");
+    if (!dadosPerfil) {
+      console.warn("Perfil de acesso ausente ou sem permissão de leitura:", profileError);
+      throw new Error("Sua conta foi autenticada, mas ainda não possui um perfil de acesso no sistema. Peça a um administrador para sincronizar os perfis.");
+    }
     const role = dadosPerfil.role;
     const status = dadosPerfil.status;
     const nomeCompleto = (dadosPerfil?.full_name || user.user_metadata?.full_name || user.email.split("@")[0]).trim();
@@ -85,7 +92,7 @@ window.senaiAuth = (() => {
   }
 
   async function loadHistory(state, render) {
-    if (!isAdmin()) return;
+    if (!canOperatePanel()) return;
 
     try {
       const client = await esperarSupabase();
@@ -117,7 +124,7 @@ window.senaiAuth = (() => {
   }
 
   async function saveReading(sensores) {
-    if (!isAdmin() || !sensores) return;
+    if (!canOperatePanel() || !sensores) return;
 
     try {
       const client = await esperarSupabase();
@@ -147,7 +154,7 @@ window.senaiAuth = (() => {
   }
 
   async function saveEvent(texto) {
-    if (!isAdmin() || !texto) return;
+    if (!canOperatePanel() || !texto) return;
 
     try {
       const client = await esperarSupabase();
@@ -189,7 +196,7 @@ window.senaiAuth = (() => {
     const professor = profile.role === "PROFESSOR";
     const nome = profile.full_name || profile.email.split("@")[0];
 
-    if (!administrador) {
+    if (!canOperatePanel()) {
       // Alunos usam o dashboard em modo de observação local
       for (const id of [
         "btn-baixar", "btn-limpar", "btn-toggle-voz", "btn-voz",
@@ -381,9 +388,6 @@ window.senaiAuth = (() => {
           sessionStorage.removeItem(chave);
         }
       }
-      esperarSupabase().then((client) => {
-        if (client) client.auth.signOut({ scope: "local" }).catch(() => {});
-      }).catch(() => {});
     } catch (e) {
       console.warn("Limpeza de sessão prévia:", e);
     }
@@ -497,5 +501,5 @@ window.senaiAuth = (() => {
     }
   }
 
-  return { start, saveReading, saveEvent, loadHistory, manage, isAdmin, getProfile };
+  return { start, saveReading, saveEvent, loadHistory, manage, isAdmin, canOperatePanel, getProfile };
 })();

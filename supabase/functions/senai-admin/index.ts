@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.0";
+import { createClient } from "@supabase/supabase-js";
 const url=Deno.env.get("SUPABASE_URL")!;
 const key=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const db=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
@@ -7,6 +7,16 @@ const out=(status:number,data:unknown)=>new Response(JSON.stringify(data),{statu
 async function log(actor:string,action:string,id:string,details:Record<string,unknown>={}) {
  const {error}=await db.from("admin_audit").insert({actor_id:actor,relation_name:"auth.users",operation:action,record_id:id,new_data:details});
  if(error) throw error;
+}
+async function ensureProfile(user:{id:string,user_metadata?:Record<string,unknown>,app_metadata?:Record<string,unknown>}, details?:{full_name:string,role:string,serie:string|null}) {
+ const role=user.app_metadata?.role;
+ const metadataRole=role==="ADM"||role==="PROFESSOR"?role:"ALUNO";
+ const accountRole=details?.role==="ADM"||details?.role==="PROFESSOR"?details.role:details?.role==="ALUNO"?"ALUNO":metadataRole;
+ const fullName=details?.full_name??(typeof user.user_metadata?.full_name==="string"?user.user_metadata.full_name:"");
+ const serie=accountRole==="ALUNO"?(details?.serie??(typeof user.user_metadata?.serie==="string"?user.user_metadata.serie.trim()||null:null)):null;
+ // Proteção adicional ao gatilho SQL: evita contas em Auth sem perfil.
+ const {error}=await db.from("profiles").upsert({id:user.id,full_name:fullName,role:accountRole,status:"ATIVO",serie},{onConflict:"id",ignoreDuplicates:true});
+ if(error)throw Error("A conta foi criada, mas não foi possível preparar seu perfil de acesso. Execute a correção de perfis no Supabase.");
 }
 async function target(id:string){
  const {data,error}=await db.from("profiles").select("id,role,status").eq("id",id).single();
@@ -58,7 +68,7 @@ Deno.serve(async(req)=>{
    const {data,error}=await db.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name,display_name:full_name,serie},app_metadata:{role}});
    if(error)return out(400,{error:error.code==="email_exists"||error.code==="user_already_exists"?"Já existe uma conta com este e-mail":"Não foi possível criar a conta. Verifique o e-mail e os requisitos de senha."});
    if(!data.user)throw Error("O serviço não confirmou a criação da conta");
-   // O trigger cria o perfil na mesma transação do usuário Auth.
+   await ensureProfile(data.user,{full_name,role,serie});
    try{await log(actor,"CREATE",data.user.id,{full_name,role,serie});}
    catch{console.error("Falha de auditoria de criação",data.user.id);}
    return out(201,{ok:true,user:{id:data.user.id,full_name,role,serie}});

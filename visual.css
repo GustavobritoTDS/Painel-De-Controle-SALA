@@ -37,17 +37,17 @@
 
 :root[data-tema="claro"] {
   color-scheme: light;
-  --fundo: #e8edf5;
-  --fundo-grad-1: rgba(79, 70, 229, 0.17);
-  --fundo-grad-2: rgba(245, 158, 11, 0.12);
-  --vidro: rgba(255, 255, 255, 0.9);
-  --vidro-hover: #ffffff;
-  --borda: #d7dfec;
-  --borda-hover: #818cf8;
+  --fundo: #cbd5e3;
+  --fundo-grad-1: rgba(67, 56, 202, 0.2);
+  --fundo-grad-2: rgba(14, 116, 144, 0.14);
+  --vidro: #d8e2ef;
+  --vidro-hover: #e3ebf5;
+  --borda: #879bb8;
+  --borda-hover: #4f46e5;
   --borda-foco: #4f46e5;
-  --texto: #243047;
-  --texto-forte: #17213a;
-  --suave: #66748b;
+  --texto: #1e293b;
+  --texto-forte: #0f172a;
+  --suave: #475569;
   --ciano: #4f46e5;
   --azul: #2563eb;
   --grade: rgba(71, 85, 105, 0.18);
@@ -59,9 +59,18 @@
   --aviso: #a16207;
   --btn-bg: linear-gradient(135deg, #4338ca, #2563eb);
   --btn-txt: #ffffff;
-  --chip: #eef2ff;
-  --sombra: 0 14px 32px -18px rgba(30, 41, 59, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --sombra-card: 0 10px 22px -16px rgba(30, 41, 59, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.96);
+  --chip: #cbd9f5;
+  --sombra: 0 14px 32px -18px rgba(30, 41, 59, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.42);
+  --sombra-card: 0 10px 22px -16px rgba(30, 41, 59, 0.56), inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  --superficie-elevada: #bdcce0;
+  --superficie-input: #b8c8dc;
+  --borda-forte: #627a9b;
+  --sombra-elevada: 0 16px 40px rgba(30, 41, 59, 0.3);
+  --texto-suave: #52637a;
+  --texto-secundario: #334155;
+  --marca-brilho: #4f46e5;
+  --sucesso: #047857;
+  --perigo: #be123c;
 }
 
 /* Tema claro: superfícies em camadas, acento índigo e detalhes quentes. */
@@ -73,15 +82,30 @@
 
 :root[data-tema="claro"] .banner {
   background:
-    linear-gradient(115deg, rgba(79, 70, 229, 0.12), rgba(255, 255, 255, 0.94) 48%, rgba(245, 158, 11, 0.11)),
+    linear-gradient(115deg, #c8d5f4 0%, #d8e1ed 48%, #e6d7bd 100%),
     var(--vidro);
-  border-color: #cbd5e1;
+  border-color: #9fb1cb;
 }
 
 :root[data-tema="claro"] .card,
 :root[data-tema="claro"] canvas.grafico,
 :root[data-tema="claro"] .evento {
-  border-color: #d7dfec;
+  border-color: #aebed3;
+}
+
+:root[data-tema="claro"] .grafico-container-card,
+:root[data-tema="claro"] .grafico-kpis {
+  background: #d1ddea;
+  border-color: #aebed3;
+}
+
+:root[data-tema="claro"] .kpi-mini {
+  background: #c8d6e6;
+}
+
+:root[data-tema="claro"] .grafico-canvas-wrapper {
+  background: #d9e3ef;
+  border-radius: var(--raio-sm);
 }
 
 :root[data-tema="claro"] .card:hover {
@@ -104,13 +128,62 @@
 }
 
 :root[data-tema="claro"] .btn {
-  background: #f8fafc;
-  border-color: #cbd5e1;
+  background: #ffffff;
+  border-color: #94a3b8;
+  color: #1e293b;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
 }
 
 :root[data-tema="claro"] .btn:hover:not(:disabled) {
   background: #eef2ff;
+  border-color: #4f46e5;
+  color: #3730a3;
   box-shadow: 0 8px 18px -12px rgba(67, 56, 202, 0.5);
+}
+
+:root[data-tema="claro"] .btn:focus-visible,
+:root[data-tema="claro"] .aba-btn:focus-visible,
+:root[data-tema="claro"] .btn-sensor-tab:focus-visible,
+:root[data-tema="claro"] .conta-subaba:focus-visible {
+  outline-color: #4338ca;
+  outline-offset: 3px;
+}
+
+:root[data-tema="claro"] .btn-sensor-tab,
+:root[data-tema="claro"] .conta-subaba {
+  color: #334155;
+  border-color: #b8c4d6;
+}
+
+/* As abas da navegação continuam discretas como no modo escuro. */
+:root[data-tema="claro"] .aba-btn:not(.ativa) {
+  color: #475569;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+:root[data-tema="claro"] .btn-sensor-tab,
+:root[data-tema="claro"] .conta-subaba {
+  background: #ffffff;
+}
+
+:root[data-tema="claro"] .aba-btn:not(.ativa):hover {
+  color: #0f172a;
+  border-color: transparent;
+  background: #e9edff;
+}
+
+:root[data-tema="claro"] .btn-sensor-tab:hover,
+:root[data-tema="claro"] .conta-subaba:hover {
+  color: #312e81;
+  border-color: #4f46e5;
+  background: #eef2ff;
+}
+
+:root[data-tema="claro"] .perfil-icone:not(.ativa) {
+  background: #ffffff;
+  border-color: #94a3b8;
 }
 
 :root[data-tema="claro"] .metrica:hover {
@@ -123,8 +196,9 @@
 
 :root[data-tema="claro"] .voz-widget {
   background:
-    linear-gradient(135deg, rgba(79, 70, 229, 0.12), rgba(255, 255, 255, 0.92) 58%, rgba(245, 158, 11, 0.08)),
+    linear-gradient(135deg, rgba(79, 70, 229, 0.24), rgba(189, 204, 224, 0.96) 58%, rgba(245, 158, 11, 0.16)),
     var(--vidro);
+  border-color: #7186a4;
   box-shadow: var(--sombra), 0 16px 36px rgba(30, 41, 59, 0.18);
 }
 

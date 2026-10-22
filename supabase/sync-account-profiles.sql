@@ -1,4 +1,6 @@
--- A edição administrativa atualiza Auth e o perfil numa única transação.
+-- Execute após account-profiles.sql. A edição administrativa atualiza
+-- Auth e o perfil pelo mesmo fluxo do servidor.
+CREATE SCHEMA IF NOT EXISTS app_private;
 CREATE OR REPLACE FUNCTION app_private.sync_user_profile()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path TO ''
 AS $function$
