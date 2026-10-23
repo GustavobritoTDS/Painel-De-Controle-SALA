@@ -2,20 +2,14 @@
 <html lang="pt-BR" data-tema="escuro">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://xjmkftxvwsvxjujgaysd.supabase.co wss://xjmkftxvwsvxjujgaysd.supabase.co; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SENAI Smart Class | Monitoramento Inteligente</title>
-<script>
-/* Aplica o tema salvo ANTES de desenhar a página (evita piscar) */
-try {
-  const temaSalvo = localStorage.getItem("tema");
-  document.documentElement.dataset.tema = temaSalvo === "claro" ? "claro" : "escuro";
-} catch (e) {
-  document.documentElement.dataset.tema = "escuro";
-}
-</script>
+<script src="theme-init.js"></script>
 <link rel="stylesheet" href="visual.css">
 <link rel="stylesheet" href="senai-auth.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0/dist/umd/supabase.min.js" integrity="sha384-/E7xfJz9bbCsrwJAbrt9CO5JB1REPVQjuSrQT4Cpz2BQBocDVsGLB2/VMAEzYaf+" crossorigin="anonymous" defer></script>
 <script src="senai-auth.js" defer></script>
 <script src="app.js" defer></script>
 </head>
