@@ -277,9 +277,7 @@
 
 /* Restrições por perfil */
 body[data-senai-role="ALUNO"] #aba-config,
-body[data-senai-role="ALUNO"] #aba-btn-config,
-body[data-senai-role="PROFESSOR"] #aba-config,
-body[data-senai-role="PROFESSOR"] #aba-btn-config {
+body[data-senai-role="ALUNO"] #aba-btn-config {
   display: none !important;
 }
 
