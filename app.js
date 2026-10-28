@@ -10,16 +10,18 @@ const LIMITE_HISTORICO = 100;
 const LIMITE_EVENTOS = 15;
 
 const NOMES = {
-  arLigado: ["Ar-condicionado", "ligado", "desligado"],
-  luzLigada: ["Luz", "ligada", "desligada"]
+  ventiladorLigado: ["Ventilador", "ligado", "desligado"],
+  ledsLigados: ["Luz", "ligada", "desligada"],
+  servoAberto: ["Porta", "aberta", "fechada"]
 };
 
 const estado = {
   sensores: null,
   historico: [],
   eventos: [],
-  arLigado: false,
-  luzLigada: false,
+  ventiladorLigado: false,
+  ledsLigados: false,
+  servoAberto: false,
   modoAuto: false,
   tempAlta: 28,
   luxBaixa: 40,
@@ -85,6 +87,7 @@ function lerSensores(anterior = null) {
       10,
       100
     ),
+    // Contador simulado de ocupação: pessoas entrando e saindo da sala.
     pessoas: limitar(
       anterior.pessoas + inteiroAleatorio(-4, 4),
       0,
@@ -96,7 +99,12 @@ function lerSensores(anterior = null) {
 // Atualmente registra comandos simulados.
 // A integração com Arduino pode ser adicionada aqui.
 function enviarComando(chave, valor) {
-  const prefixo = chave === "arLigado" ? "AR" : "LUZ";
+  const prefixos = {
+    ventiladorLigado: "VENTILADOR_DC",
+    ledsLigados: "LEDS",
+    servoAberto: "SERVO_SG90"
+  };
+  const prefixo = prefixos[chave] || chave.toUpperCase();
   console.log(`[SIMULAÇÃO] ${prefixo}:${valor ? 1 : 0}`);
 }
 
@@ -133,24 +141,24 @@ function aplicarAutomacao(leitura) {
   const temGente = leitura.pessoas > 0;
 
   if (!temGente) {
-    definir("arLigado", false, "sala vazia");
-    definir("luzLigada", false, "sala vazia");
+    definir("ventiladorLigado", false, "sala vazia");
+    definir("ledsLigados", false, "sala vazia");
     return;
   }
 
   // Histerese: evita ligar e desligar sem parar.
   if (leitura.temperatura >= estado.tempAlta) {
-    definir("arLigado", true, "temperatura alta");
+    definir("ventiladorLigado", true, "temperatura alta no DHT11");
   } else if (leitura.temperatura <= estado.tempAlta - 2) {
-    definir("arLigado", false, "temperatura normal");
+    definir("ventiladorLigado", false, "temperatura normal no DHT11");
   }
 
   if (leitura.luminosidade <= estado.luxBaixa) {
-    definir("luzLigada", true, "pouca luz");
+    definir("ledsLigados", true, "pouca luz no LDR");
   } else if (
     leitura.luminosidade >= Math.min(estado.luxBaixa + 20, 100)
   ) {
-    definir("luzLigada", false, "luz suficiente");
+    definir("ledsLigados", false, "luz suficiente no LDR");
   }
 }
 
@@ -257,8 +265,9 @@ function desligarTudo() {
     mudarModoAuto(false, "desligar tudo");
   }
 
-  definir("arLigado", false, "desligar tudo");
-  definir("luzLigada", false, "desligar tudo");
+  definir("ventiladorLigado", false, "desligar tudo");
+  definir("ledsLigados", false, "desligar tudo");
+  definir("servoAberto", false, "desligar tudo");
 
   desenhar();
 }
@@ -364,7 +373,7 @@ function baixarHistoricoExcel() {
     "Temperatura (°C)",
     "Umidade (%)",
     "Luminosidade (%)",
-    "Pessoas"
+    "Pessoas na sala"
   ];
   const colunas = ["A", "B", "C", "D", "E", "F"];
   const linhasPlanilha = [
@@ -475,9 +484,9 @@ function calcularAlertas(sensor) {
 
   if (
     sensor.pessoas === 0 &&
-    (estado.arLigado || estado.luzLigada)
+    (estado.ventiladorLigado || estado.ledsLigados)
   ) {
-    alertas.push("Equipamentos ligados com sala vazia");
+    alertas.push("Equipamentos ligados com a sala vazia");
   }
 
   return alertas;
@@ -1058,7 +1067,7 @@ function desenhar() {
   $("m-lux").textContent = `${s.luminosidade} %`;
 
   $("m-presenca").textContent =
-    s.pessoas > 0 ? "Tem pessoas" : "Não tem";
+    s.pessoas === 1 ? "1 pessoa" : `${s.pessoas} pessoas`;
 
   const anterior = hist.length > 1
     ? hist[hist.length - 2]
@@ -1084,7 +1093,7 @@ function desenhar() {
   mostrarDelta(
     "m-pessoas-delta",
     difPessoas,
-    difPessoas === null ? "" : String(difPessoas)
+    difPessoas === null ? "" : `${Math.abs(difPessoas)} pessoa${Math.abs(difPessoas) === 1 ? "" : "s"}`
   );
 
   // Alertas.
@@ -1113,24 +1122,26 @@ function desenhar() {
   if (intervalo) intervalo.disabled = !estado.autoRefresh;
 
   mostrarPill(
-    "pill-ar",
-    estado.arLigado,
+    "pill-ventilador",
+    estado.ventiladorLigado,
     "LIGADO",
     "DESLIGADO"
   );
 
   mostrarPill(
-    "pill-luz",
-    estado.luzLigada,
+    "pill-leds",
+    estado.ledsLigados,
     "LIGADA",
     "DESLIGADA"
   );
 
-  const btnAr = $("btn-ar");
-  const btnLuz = $("btn-luz");
+  mostrarPill("pill-servo", estado.servoAberto, "ABERTO", "FECHADO");
 
-  if (btnAr) btnAr.disabled = estado.modoAuto;
-  if (btnLuz) btnLuz.disabled = estado.modoAuto;
+  const btnVentilador = $("btn-ventilador");
+  const btnLeds = $("btn-leds");
+
+  if (btnVentilador) btnVentilador.disabled = estado.modoAuto;
+  if (btnLeds) btnLeds.disabled = estado.modoAuto;
 
   // Registro de eventos.
   const lista = $("lista-eventos");
@@ -1315,6 +1326,7 @@ class VozController {
       "ligar", "liga", "ligue", "ative", "ativar", "acender",
       "acenda", "acende", "habilitar", "iniciar"
     );
+    const fechar = tem("fechar", "fecha", "feche");
     const historico = tem("historico", "historia", "csv", "registros");
     const atualizacao = tem("atualizacao", "atualizacoes", "atualizar automaticamente", "atualizacao automatica");
     const modoAutomatico = tem("automatico", "automatica", "automacao") || (tem("modo") && tem("auto"));
@@ -1344,13 +1356,16 @@ class VozController {
     }
 
     // Dispositivos (inclui variações fonéticas comuns como liz/lis/luiz/lâmpada)
-    const ar = tem("ar", "condicionado", "climatizacao", "climatizador", "ar-condicionado", "arcondicionado");
+    const ar = tem("ar", "ventilador", "ventilacao", "motor", "cooler");
     const luz = tem("luz", "luzes", "iluminacao", "liz", "lis", "luiz", "lus", "lampada", "lampadas", "led", "leds");
+    const servo = tem("servo", "sg90", "porta");
 
-    if (desligar && ar) return "desligar_ar";
-    if (desligar && luz) return "desligar_luz";
-    if (ligar && ar) return "ligar_ar";
-    if (ligar && luz) return "ligar_luz";
+    if (desligar && ar) return "desligar_ventilador";
+    if (desligar && luz) return "desligar_leds";
+    if ((desligar || fechar) && servo) return "fechar_servo";
+    if (ligar && ar) return "ligar_ventilador";
+    if (ligar && luz) return "ligar_leds";
+    if ((ligar || tem("abrir", "abra")) && servo) return "abrir_servo";
 
     // Simulação manual
     if (tem("simular", "simule", "simulacao", "nova deteccao")) {
@@ -1470,10 +1485,12 @@ function configurarVoz() {
 
     onCommand(comando) {
       const comandosManuais = [
-        "ligar_ar",
-        "desligar_ar",
-        "ligar_luz",
-        "desligar_luz"
+        "ligar_ventilador",
+        "desligar_ventilador",
+        "ligar_leds",
+        "desligar_leds",
+        "abrir_servo",
+        "fechar_servo"
       ];
 
       // Um comando manual interrompe o modo automático.
@@ -1485,23 +1502,33 @@ function configurarVoz() {
       }
 
       switch (comando) {
-        case "ligar_ar":
-          definir("arLigado", true, "comando de voz");
+        case "ligar_ventilador":
+          definir("ventiladorLigado", true, "comando de voz");
           desenhar();
           break;
 
-        case "desligar_ar":
-          definir("arLigado", false, "comando de voz");
+        case "desligar_ventilador":
+          definir("ventiladorLigado", false, "comando de voz");
           desenhar();
           break;
 
-        case "ligar_luz":
-          definir("luzLigada", true, "comando de voz");
+        case "ligar_leds":
+          definir("ledsLigados", true, "comando de voz");
           desenhar();
           break;
 
-        case "desligar_luz":
-          definir("luzLigada", false, "comando de voz");
+        case "desligar_leds":
+          definir("ledsLigados", false, "comando de voz");
+          desenhar();
+          break;
+
+        case "abrir_servo":
+          definir("servoAberto", true, "comando de voz");
+          desenhar();
+          break;
+
+        case "fechar_servo":
+          definir("servoAberto", false, "comando de voz");
           desenhar();
           break;
 
@@ -1639,12 +1666,16 @@ function iniciar() {
     desligarTudo
   );
 
-  $("btn-ar").addEventListener("click", () => {
-    alternar("arLigado");
+  $("btn-ventilador").addEventListener("click", () => {
+    alternar("ventiladorLigado");
   });
 
-  $("btn-luz").addEventListener("click", () => {
-    alternar("luzLigada");
+  $("btn-leds").addEventListener("click", () => {
+    alternar("ledsLigados");
+  });
+
+  $("btn-servo").addEventListener("click", () => {
+    alternar("servoAberto");
   });
 
   $("modo-auto").addEventListener("change", (evento) => {
@@ -1996,10 +2027,12 @@ const VOZ_CONVERSA_CSS = `
 const VOZ_PERGUNTA_FINAL = " Mais alguma coisa?";
 
 const VOZ_RESPOSTAS = {
-  ligar_ar: "O ar-condicionado está ativado.",
-  desligar_ar: "O ar-condicionado está desativado.",
-  ligar_luz: "A luz está acesa.",
-  desligar_luz: "A luz está apagada.",
+  ligar_ventilador: "O ventilador está ligado.",
+  desligar_ventilador: "O ventilador está desligado.",
+  ligar_leds: "A luz está ligada.",
+  desligar_leds: "A luz está desligada.",
+  abrir_servo: "A porta está aberta.",
+  fechar_servo: "A porta está fechada.",
   ligar_modo_auto: "O modo automático está ativado.",
   desligar_modo_auto: "O modo automático está desativado.",
   ligar_atualizacao: "A atualização automática está ativada.",
@@ -2411,7 +2444,7 @@ function aprimorarVozConversa() {
       return;
     }
 
-    // Modo automático ligado: ar e luz não podem ser desligados individualmente.
+    // Modo automático ligado: ventilador e LEDs não podem ser desligados individualmente.
     const bloqueio = VOZ_BLOQUEIOS_AUTO[comando];
     if (bloqueio && estado.modoAuto) {
       registrarEvento(`${bloqueio.nome} não pode ser ${bloqueio.desligado} no modo automático`);
@@ -2715,16 +2748,16 @@ function corrigirAlavancaConversaVoz() {
 document.addEventListener("DOMContentLoaded", corrigirAlavancaConversaVoz);
 
 // ==========================================
-// MODO AUTOMÁTICO: AR E LUZ NÃO DESLIGAM SOZINHOS (ADICIONAL)
-// Com o modo automático ligado, ar e luz não podem ser desligados
-// pelos botões nem por voz ("desligar ar" / "desligar luz").
+// MODO AUTOMÁTICO: VENTILADOR E LEDS NÃO DESLIGAM SOZINHOS (ADICIONAL)
+// Com o modo automático ligado, ventilador e LEDs não podem ser desligados
+// pelos botões nem por voz.
 // O caminho para desligar é "Desligar tudo", que também desliga o
 // modo automático. A própria automação continua gerenciando os dois.
 // ==========================================
 
 const VOZ_BLOQUEIOS_AUTO = {
-  desligar_ar: { nome: "Ar-condicionado", artigo: "o", desligado: "desligado" },
-  desligar_luz: { nome: "Luz", artigo: "a", desligado: "desligada" }
+  desligar_ventilador: { nome: "Ventilador", artigo: "o", desligado: "desligado" },
+  desligar_leds: { nome: "Luz", artigo: "a", desligado: "desligada" }
 };
 
 const BLOQUEIO_AUTO_TITULO = "Bloqueado no modo automático. Use “Desligar tudo”.";
@@ -2739,7 +2772,7 @@ function sincronizarModoAutoVoz() {
   const dica = $("voz-dica-auto");
   if (dica && dica.hidden === estado.modoAuto) dica.hidden = !estado.modoAuto;
 
-  [["btn-ar", "arLigado"], ["btn-luz", "luzLigada"]].forEach(([id, chave]) => {
+  [["btn-ventilador", "ventiladorLigado"], ["btn-leds", "ledsLigados"]].forEach(([id, chave]) => {
     const botao = $(id);
     if (!botao) return;
 
@@ -2765,7 +2798,7 @@ function garantirDicaModoAutoVoz(widget) {
   dica.hidden = true;
 
   const texto = document.createElement("span");
-  texto.textContent = "Modo automático ligado: para desligar ar e luz, diga “desligar tudo”.";
+  texto.textContent = "Modo automático ligado: para desligar ventilador e luz, diga “desligar tudo”.";
 
   dica.appendChild(texto);
 
@@ -2777,7 +2810,7 @@ function garantirDicaModoAutoVoz(widget) {
   }
 }
 
-// Com o modo automático ligado, nada desliga ar e luz (nem a própria automação:
+// Com o modo automático ligado, nada desliga ventilador e LEDs (nem a própria automação:
 // sala vazia, temperatura normal, luz suficiente). Só "desligar tudo" desliga,
 // e ele antes desliga o modo automático. A função original não é editada:
 // apenas é envolvida por uma verificação.
@@ -2802,9 +2835,9 @@ function aplicarBloqueioModoAuto() {
   estilo.textContent = VOZ_AUTO_CSS;
   document.head.appendChild(estilo);
 
-  // Botões de ar e luz: impede desligar enquanto o modo automático estiver ligado.
-  [["btn-ar", "arLigado", "O ar-condicionado", "desligado"],
-   ["btn-luz", "luzLigada", "A luz", "desligada"]].forEach(([id, chave, nome, desligado]) => {
+  // Ventilador e LEDs: impede desligar enquanto o modo automático estiver ligado.
+  [["btn-ventilador", "ventiladorLigado", "O ventilador", "desligado"],
+   ["btn-leds", "ledsLigados", "A luz", "desligada"]].forEach(([id, chave, nome, desligado]) => {
     const botao = $(id);
     if (!botao) return;
 
