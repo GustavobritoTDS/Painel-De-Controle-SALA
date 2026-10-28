@@ -173,20 +173,20 @@
     <!-- SENSORES -->
     <section class="metricas">
       <div class="card metrica">
-        <div class="rotulo"><svg class="ico"><use href="#i-temp"/></svg>Temperatura</div>
+        <div class="rotulo"><svg class="ico"><use href="#i-temp"/></svg>Temperatura (DHT11)</div>
         <div class="valor" id="m-temp">--</div>
         <div class="delta" id="m-temp-delta"></div>
       </div>
       <div class="card metrica">
-        <div class="rotulo"><svg class="ico"><use href="#i-gota"/></svg>Umidade</div>
+        <div class="rotulo"><svg class="ico"><use href="#i-gota"/></svg>Umidade (DHT11)</div>
         <div class="valor" id="m-umid">--</div>
       </div>
       <div class="card metrica">
-        <div class="rotulo"><svg class="ico"><use href="#i-luz"/></svg>Luminosidade</div>
+        <div class="rotulo"><svg class="ico"><use href="#i-luz"/></svg>Luminosidade (LDR)</div>
         <div class="valor" id="m-lux">--</div>
       </div>
       <div class="card metrica">
-        <div class="rotulo"><svg class="ico"><use href="#i-user"/></svg>Presença</div>
+        <div class="rotulo"><svg class="ico"><use href="#i-user"/></svg>Pessoas na sala</div>
         <div class="valor" id="m-presenca">--</div>
       </div>
     </section>
@@ -283,14 +283,19 @@
       </div>
       <div class="duas-colunas">
         <div class="card">
-          <h3><svg class="ico"><use href="#i-neve"/></svg>Ar-condicionado</h3>
-          <span class="pill off" id="pill-ar"></span>
-          <div><button class="btn" id="btn-ar">Ligar/Desligar ar</button></div>
+          <h3><svg class="ico"><use href="#i-neve"/></svg>Ventilador</h3>
+          <span class="pill off" id="pill-ventilador"></span>
+          <div><button class="btn" id="btn-ventilador">Ligar/Desligar ventilador</button></div>
         </div>
         <div class="card">
           <h3><svg class="ico"><use href="#i-luz"/></svg>Luz</h3>
-          <span class="pill off" id="pill-luz"></span>
-          <div><button class="btn" id="btn-luz">Ligar/Desligar luz</button></div>
+          <span class="pill off" id="pill-leds"></span>
+          <div><button class="btn" id="btn-leds">Ligar/Desligar luz</button></div>
+        </div>
+        <div class="card">
+          <h3><svg class="ico"><use href="#i-power"/></svg>Porta</h3>
+          <span class="pill off" id="pill-servo"></span>
+          <div><button class="btn" id="btn-servo">Abrir/Fechar porta</button></div>
         </div>
       </div>
       <h4>Últimos eventos</h4>
@@ -302,10 +307,10 @@
       <div class="grafico-container-card">
         <div class="grafico-topo">
           <div class="grafico-titulos">
-            <h2>Verificação de Pessoas</h2>
+            <h2>Ocupação da sala</h2>
             <div class="grafico-status-badge">
               <span class="ponto-ao-vivo" aria-hidden="true"></span>
-              <span>Detecção e histórico de ocupação da sala</span>
+              <span>Contagem simulada de pessoas detectadas na sala</span>
             </div>
           </div>
         </div>
@@ -328,9 +333,9 @@
       <h2>Configurações</h2>
       <div class="card config">
         <p class="legenda">Ajuste as regras da automação sem mexer no código.</p>
-        <label for="temp-alta">Temperatura para ligar o ar (°C): <b id="temp-alta-valor">28</b></label>
+        <label for="temp-alta">Temperatura do DHT11 para ligar o ventilador (°C): <b id="temp-alta-valor">28</b></label>
         <input type="range" id="temp-alta" min="20" max="32" value="28">
-        <label for="lux-baixa">Luminosidade para ligar a luz (%): <b id="lux-baixa-valor">40</b></label>
+        <label for="lux-baixa">Luminosidade do LDR para ligar a luz (%): <b id="lux-baixa-valor">40</b></label>
         <input type="range" id="lux-baixa" min="10" max="80" value="40">
         <label class="linha" for="auto-refresh"><input type="checkbox" id="auto-refresh">Atualização automática</label>
         <label for="intervalo">Intervalo (segundos): <b id="intervalo-valor">5</b></label>
