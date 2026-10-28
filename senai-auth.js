@@ -144,7 +144,7 @@ window.senaiAuth = (() => {
         temperature: sensores.temperatura,
         humidity: sensores.umidade,
         luminosity: sensores.luminosidade,
-        people: sensores.pessoas,
+        people: Number(sensores.pessoas),
         source: "SIMULADO",
         created_by: user.id
       });
