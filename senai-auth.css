@@ -8,7 +8,11 @@
   z-index: 999999;
   display: grid;
   place-items: center;
+  box-sizing: border-box;
   padding: 24px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   background: radial-gradient(circle at top center, #111d38 0%, #060b17 70%, #03060d 100%);
   color: #f8fafc;
   backdrop-filter: blur(8px);
@@ -32,6 +36,7 @@
 
 .senai-login-card {
   width: min(100%, 420px);
+  box-sizing: border-box;
   padding: 36px 32px;
   border-radius: 20px;
   background: rgba(17, 29, 54, 0.85);
@@ -320,8 +325,14 @@ body[data-senai-role="ALUNO"] #aba-btn-config {
 .contas-lista-cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 28px; }
 .contas-lista-cabecalho h3 { margin: 0; }
 #contas-lista-status { color: var(--suave); font-size: .9rem; }
-.contas-tabela-container { overflow-x: auto; }
-.contas-tabela { border-collapse: collapse; width: 100%; text-align: left; }
+.contas-tabela-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.contas-tabela { border-collapse: collapse; width: 100%; min-width: 720px; text-align: left; }
 .contas-tabela th, .contas-tabela td { padding: 14px 12px; border-bottom: 1px solid var(--borda); overflow-wrap: anywhere; }
 .contas-tabela th { color: var(--suave); font-size: .85rem; }
 .contas-tabela td { color: var(--texto); }
@@ -353,3 +364,182 @@ body[data-aba-ativa="conta"] #voz-widget { display: none !important; }
 .gestao-contas h4 { margin-top: 24px; color: var(--texto-forte); }
 @media (max-width: 900px) { .sidebar-acoes { margin-top: 0; margin-left: auto; } }
 @media (max-width: 600px) { .contas-filtros { grid-template-columns: 1fr; } .conta-subaba { padding: 10px 12px; } }
+
+/* Ajustes exclusivamente responsivos: preservam o layout de telas maiores. */
+@media (max-width: 900px) {
+  /* Evita o zoom automático do Safari ao focar campos em celulares. */
+  .senai-input-wrap input,
+  .conta-campo input,
+  .conta-campo select {
+    font-size: 16px;
+  }
+
+  .conta-cabecalho > div {
+    min-width: 0;
+  }
+
+  .conta-cabecalho h2 {
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 600px) {
+  #senai-login {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    place-items: start center;
+    padding-top: max(12px, env(safe-area-inset-top));
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-bottom: max(12px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
+  }
+
+  .senai-login-card {
+    margin-block: auto;
+    padding: 24px 18px;
+    border-radius: 16px;
+  }
+
+  .senai-login-header {
+    gap: 12px;
+    margin-bottom: 22px;
+    padding-bottom: 16px;
+  }
+
+  .senai-login-logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .senai-login-header h2 {
+    font-size: 1.2rem;
+  }
+
+  .senai-login-sub {
+    overflow-wrap: anywhere;
+  }
+
+  .senai-login-footer {
+    margin-top: 20px;
+    padding-top: 14px;
+  }
+
+  .senai-badge-seguro {
+    justify-content: center;
+    line-height: 1.4;
+  }
+
+  .gestao-contas {
+    margin-top: 20px;
+    padding: 14px;
+  }
+
+  .conta-form {
+    gap: 16px;
+    margin: 18px 0;
+  }
+
+  .conta-form > div.conta-form-largura {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .conta-form > div.conta-form-largura .btn {
+    flex: 1 1 150px;
+  }
+
+  .conta-subnav {
+    gap: 6px;
+    margin-bottom: 18px;
+    padding-bottom: 12px;
+  }
+
+  .conta-subaba {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 10px 8px;
+    line-height: 1.25;
+  }
+
+  .contas-lista-cabecalho {
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  #btn-atualizar-contas {
+    width: 100%;
+  }
+
+  .contas-filtros {
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  #contas-lista-status {
+    line-height: 1.4;
+  }
+
+  .contas-tabela th,
+  .contas-tabela td {
+    padding: 12px 10px;
+  }
+}
+
+/* Celulares em paisagem e telas baixas continuam roláveis com o teclado aberto. */
+@media (max-width: 900px) and (max-height: 600px) {
+  #senai-login {
+    height: 100vh;
+    height: 100dvh;
+    place-items: start center;
+    padding-top: max(10px, env(safe-area-inset-top));
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+
+  .senai-login-card {
+    margin-block: 0;
+    padding: 18px 22px;
+  }
+
+  .senai-login-header {
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+  }
+
+  .senai-campo {
+    margin-bottom: 12px;
+  }
+
+  .senai-login-footer {
+    margin-top: 14px;
+    padding-top: 10px;
+  }
+}
+
+@media (pointer: coarse) {
+  .senai-input-wrap input {
+    min-height: 48px;
+  }
+
+  .senai-input-wrap:has(.btn-toggle-senha) input {
+    padding-right: 52px;
+  }
+
+  .btn-toggle-senha {
+    right: 2px;
+    width: 44px;
+    height: 44px;
+    padding: 10px;
+    touch-action: manipulation;
+  }
+
+  .senai-btn-entrar,
+  #btn-sair,
+  .conta-subaba,
+  .gestao-contas .btn {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+}
