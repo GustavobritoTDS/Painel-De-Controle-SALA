@@ -2,7 +2,7 @@
 
 Painel de monitoramento e automação de sala desenvolvido com HTML, CSS e JavaScript, com autenticação e persistência no Supabase.
 
-As leituras de temperatura, umidade, luminosidade e presença são **simuladas**. Os controles e o assistente de voz operam a simulação; ainda não há acionamento de equipamentos físicos.
+As leituras de ocupação, DHT11 (temperatura e umidade) e LDR (luminosidade) são **simuladas**. A ocupação representa de 0 a 40 pessoas na sala. Os controles do servo SG90, motor DC do ventilador e LEDs também operam a simulação; ainda não há acionamento de equipamentos físicos.
 
 ## Acesso online
 
@@ -15,7 +15,7 @@ A Vercel publica automaticamente os commits enviados à branch `main` deste repo
 ## Funcionalidades
 
 - Indicadores, gráficos interativos e histórico de sensores simulados.
-- Controles de ar e luz, regras automáticas, exportação de histórico e assistente de voz.
+- Controles do servo SG90, ventilador DC e LEDs, regras automáticas, exportação de histórico e assistente de voz.
 - Temas escuro e claro. O tema claro usa superfícies brancas, texto escuro e acentos roxos.
 - Layout para computador, tablet e celular.
 - Área de perfil separada do painel da sala.
